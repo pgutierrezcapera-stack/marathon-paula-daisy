@@ -1,175 +1,321 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Media Maratón — Paula & Daisy</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #07070f; color: #f0f0f0; }
-    ::-webkit-scrollbar { width: 3px; }
-    ::-webkit-scrollbar-thumb { background: #1a1a28; border-radius: 2px; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Media Maratón — Paula & Daisy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#07070f;color:#f0f0f0;font-family:'DM Sans',sans-serif;min-height:100vh}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#1a1a28;border-radius:2px}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1)}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react">
-const { useState, useEffect } = React;
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const{useState,useEffect,useCallback,useRef}=React;
 
-const CLIENT_ID = "214998";
-const REDIRECT_URI = window.location.href.split("?")[0].split("#")[0];
-const STRAVA_SCOPE = "activity:read_all";
-
-const PROFILES = {
-  paula: { id:"paula", name:"Paula", emoji:"🔥", color:"#f97316" },
-  daisy: { id:"daisy", name:"Daisy", emoji:"🌸", color:"#ec4899" },
+// ── PROFILES ──────────────────────────────────────────────────────────────────
+const PROFILES={
+  paula:{id:"paula",name:"Paula",emoji:"🔥",color:"#f97316",pin:"paula2025"},
+  daisy:{id:"daisy",name:"Daisy",emoji:"🌸",color:"#ec4899",pin:"daisy2025"},
 };
 
-const PHASES = [
-  { id:1, name:"Base",       weeks:[1,2,3,4],           color:"#4ade80", emoji:"🌱" },
-  { id:2, name:"Desarrollo", weeks:[5,6,7,8,9,10],      color:"#fb923c", emoji:"🔥" },
-  { id:3, name:"Pico",       weeks:[11,12,13,14,15,16], color:"#f87171", emoji:"⚡" },
-  { id:4, name:"Taper",      weeks:[17,18,19,20,21],    color:"#a78bfa", emoji:"🎯" },
-];
-const DAY_NAMES = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+// ── PACE ZONES (based on current 7:20 easy, target 4:58 race) ─────────────────
+// Zone 1 (recovery):  7:20–7:40/km
+// Zone 2 (aerobic):   6:50–7:20/km
+// Tempo early:        6:10–6:30/km  → late: 5:30–5:50/km
+// Race pace target:   4:58/km (1:45 HM)
+// Long run:           Z2 with last km progressing toward 5:30
 
-function buildPlan() {
-  const plan = {};
-  for (let w = 1; w <= 21; w++) {
-    const isEasy = w % 4 === 0 && w < 17;
-    const v = isEasy ? 0.7 : Math.min(1, 0.5 + w * 0.025);
-    const short = +(3 + w*0.3*v).toFixed(1);
-    const med   = +(6 + w*0.4*v).toFixed(1);
-    const long  = +(8 + w*0.6*v).toFixed(1);
-    const tempo = +(4 + w*0.25*v).toFixed(1);
-    const gymA = { type:"gym", label:"Fuerza A", icon:"🏋️", color:"#60a5fa", details:["Sentadillas 4×10","Peso muerto 3×8","Hip thrust 3×12","Plancha 3×45s","Core rotacional 3×15"] };
-    const gymB = { type:"gym", label:"Fuerza B", icon:"🏋️", color:"#60a5fa", details:["Estocadas 4×12","Step-up 3×10","Glúteo cable 3×15","Pantorrilla 4×20","Abdominales 3×20"] };
-    const rec  = { type:"recovery", label:"Recuperación", icon:"🧘", color:"#34d399", details:["Foam roller 15min","Estiramientos 20min","Caminata suave opcional"] };
-    const rest = { type:"rest", label:"Descanso", icon:"😴", color:"#6b7280", details:["Descanso total o yoga suave"] };
-    if (w === 21) {
-      plan[w] = {
-        1:{type:"run",label:`Suave ${(short*.5).toFixed(1)}km`,icon:"🏃",color:"#4ade80",km:+(short*.5).toFixed(1),details:["Ritmo 6:30-7:00/km","Solo activar piernas"]},
-        2:rest,3:{type:"run",label:"Strides 4km",icon:"⚡",color:"#fb923c",km:4,details:["3km calentamiento","4×100m strides"]},
+const PHASES=[
+  {id:1,name:"Base",      weeks:[1,2,3,4],          color:"#4ade80",emoji:"🌱"},
+  {id:2,name:"Desarrollo",weeks:[5,6,7,8,9,10],     color:"#fb923c",emoji:"🔥"},
+  {id:3,name:"Pico",      weeks:[11,12,13,14,15,16],color:"#f87171",emoji:"⚡"},
+  {id:4,name:"Taper",     weeks:[17,18,19,20,21],   color:"#a78bfa",emoji:"🎯"},
+];
+const DAY_NAMES=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+function buildPlan(){
+  const plan={};
+  const gymA={type:"gym",label:"Fuerza A",icon:"🏋️",color:"#60a5fa",details:["Sentadillas 4×10","Peso muerto 3×8","Hip thrust 3×12","Plancha 3×45s","Core rotacional 3×15","Descanso 90s entre series"]};
+  const gymB={type:"gym",label:"Fuerza B",icon:"🏋️",color:"#60a5fa",details:["Estocadas 4×12 c/lado","Step-up con peso 3×10","Glúteo en cable 3×15","Elevación pantorrilla 4×20","Abdominales 3×20","Descanso 90s entre series"]};
+  const rec ={type:"recovery",label:"Recuperación",icon:"🧘",color:"#34d399",details:["Foam roller piernas 15min","Estiramientos dinámicos 10min","Estiramientos estáticos 15min","Opcional: caminata suave 20min"]};
+  const rest={type:"rest",label:"Descanso",icon:"😴",color:"#6b7280",details:["Descanso total","Opcional: yoga suave o movilidad","Hidratación y alimentación consciente"]};
+
+  for(let w=1;w<=21;w++){
+    const isEasy=w%4===0&&w<17;
+    const vol=isEasy?0.7:Math.min(1,0.5+w*0.022);
+
+    // Distances
+    const short=+(4+w*0.25*vol).toFixed(1);
+    const med  =+(7+w*0.35*vol).toFixed(1);
+    const long =+(9+w*0.55*vol).toFixed(1);
+    const tempo=+(4+w*0.2*vol).toFixed(1);
+
+    // Pace strings that progress through the plan
+    const z1="7:20–7:40/km";
+    const z2="6:50–7:20/km";
+    // Tempo pace progresses from 6:30 → 5:30 over 21 weeks
+    const tempoPaceStart=6.5; // min/km
+    const tempoPaceEnd=5.5;
+    const tpMin=+(tempoPaceStart-(tempoPaceStart-tempoPaceEnd)*(w/21)).toFixed(1);
+    const tpMax=+(tpMin+0.3).toFixed(1);
+    const tempoPace=`${Math.floor(tpMax)}:${String(Math.round((tpMax%1)*60)).padStart(2,"0")}–${Math.floor(tpMin)}:${String(Math.round((tpMin%1)*60)).padStart(2,"0")}/km`;
+    // Long run last km pace
+    const lrPaceMin=+(6.8-(6.8-5.5)*(w/21)).toFixed(1);
+    const lrPace=`${Math.floor(lrPaceMin)}:${String(Math.round((lrPaceMin%1)*60)).padStart(2,"0")}/km`;
+
+    if(w===21){
+      plan[w]={
+        1:{type:"run",label:`Suave ${(short*0.4).toFixed(1)}km`,icon:"🏃",color:"#4ade80",km:+(short*0.4).toFixed(1),details:[`${(short*0.4).toFixed(1)}km ritmo ${z1}`,`FC zona 1 — muy suave`,"Solo despertar las piernas","No mirar el reloj"]},
+        2:rest,
+        3:{type:"run",label:"Strides 3km",icon:"⚡",color:"#fb923c",km:3,details:["1.5km calentamiento zona 1","4×80m acelerones suaves","Recuperación completa entre cada uno","1km vuelta calma"]},
         4:rest,5:rest,
-        6:{type:"race",label:"🏁 MEDIA MARATÓN",icon:"🏅",color:"#f87171",km:21.1,details:["¡El gran día!","Desayuno 2h antes","Calentar 15min","¡A disfrutar! 🎉"]},
+        6:{type:"race",label:"🏁 MEDIA MARATÓN",icon:"🏅",color:"#f87171",km:21.1,details:["¡El gran día! Meta: 1:45 (4:58/km)","Desayuno habitual 2.5h antes","Calentar 15min muy suave","Primeros 5km NO salir rápido","Km 5-15: ritmo objetivo 4:58/km","Km 15-21: lo que el cuerpo dé 💪","¡Disfrutar cada metro! 🎉"]},
         7:rest,
       };
-    } else if (isEasy) {
-      plan[w]={1:{type:"run",label:`Fácil ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2`,"FC 60-70%"]},2:gymA,3:rec,4:{type:"run",label:`Fácil ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km fácil`]},5:gymB,6:{type:"run",label:`Largo ${med}km`,icon:"🏃",color:"#a78bfa",km:med,details:[`${med}km suave`]},7:rest};
-    } else if (w<=4) {
-      plan[w]={1:{type:"run",label:`Rodaje ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2`]},2:gymA,3:rec,4:{type:"run",label:`Tempo ${tempo}km`,icon:"⚡",color:"#fb923c",km:tempo,details:["1km calentamiento",`${+(tempo-2).toFixed(1)}km umbral 5:10-5:30/km`,"1km vuelta calma"]},5:gymB,6:{type:"run",label:`Long Run ${long}km`,icon:"🏃",color:"#a78bfa",km:long,details:[`${long}km ritmo 6:00-6:30/km`]},7:rest};
-    } else if (w<=10) {
-      plan[w]={1:{type:"run",label:`Rodaje ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2`]},2:gymA,3:{type:"run",label:`Interválico ${tempo}km`,icon:"🔥",color:"#f87171",km:tempo,details:["2km calentamiento","6×400m ritmo 5K","1min rec.","2km vuelta calma"]},4:rec,5:gymB,6:{type:"run",label:`Long Run ${long}km`,icon:"🏃",color:"#a78bfa",km:long,details:[`${long}km`]},7:rest};
-    } else {
-      plan[w]={1:{type:"run",label:`Rodaje ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km fácil`]},2:gymA,3:{type:"run",label:`Tempo prog. ${tempo}km`,icon:"⚡",color:"#fb923c",km:tempo,details:[`${tempo}km progresivo`,"6:00→5:00/km"]},4:rec,5:gymB,6:{type:"run",label:`Long Run ${long}km`,icon:"🏃",color:"#a78bfa",km:long,details:[`${long}km ritmo objetivo 5:30/km`]},7:rest};
+      continue;
     }
+
+    if(isEasy){
+      plan[w]={
+        1:{type:"run",label:`Z2 ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2 aeróbica`,`Ritmo ${z2}`,"Puedes mantener una conversación","Cadencia 170–175spm"]},
+        2:gymA,3:rec,
+        4:{type:"run",label:`Z1 ${short}km`,icon:"🏃",color:"#34d399",km:short,details:[`${short}km zona 1 — muy fácil`,`Ritmo ${z1}`,"Semana de descarga — sin presión","Escuchar el cuerpo"]},
+        5:gymB,
+        6:{type:"run",label:`Largo fácil ${med}km`,icon:"🏃‍♂️",color:"#a78bfa",km:med,details:[`${med}km todo en zona 2`,`Ritmo ${z2} constante`,"Llevar agua si >50min","Semana de descarga — no forzar"]},
+        7:rest,
+      };
+      continue;
+    }
+
+    if(w<=4){
+      plan[w]={
+        1:{type:"run",label:`Z2 ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2 aeróbica`,`Ritmo ${z2}`,"Respiración nasal si puedes","Foco en cadencia y postura"]},
+        2:gymA,3:rec,
+        4:{type:"run",label:`Tempo ${tempo}km`,icon:"⚡",color:"#fb923c",km:tempo,details:[`1.5km calentamiento zona 1 (${z1})`,`${+(tempo-3).toFixed(1)}km a ritmo tempo ${tempoPace}`,"1.5km vuelta calma zona 1","Primer bloque de calidad — no obsesionarse con el pace"]},
+        5:gymB,
+        6:{type:"run",label:`Long Run ${long}km`,icon:"🏃‍♂️",color:"#a78bfa",km:long,details:[`${long}km — todo en zona 2`,`Ritmo ${z2} los primeros ${+(long-3).toFixed(0)}km`,`Últimos 2–3km puedes soltar a ${lrPace}`,"Llevar gel/agua si >75min","El más importante de la semana"]},
+        7:rest,
+      };
+      continue;
+    }
+
+    if(w<=10){
+      // Add intervals
+      const intReps=w<=7?"5×600m":"6×800m";
+      const intPace=w<=7?"6:00–6:20/km":"5:50–6:10/km";
+      plan[w]={
+        1:{type:"run",label:`Z2 ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2`,`Ritmo ${z2}`,"Activación del día","Técnica de carrera: caída hacia adelante"]},
+        2:gymA,
+        3:{type:"run",label:`Interválico ${tempo}km`,icon:"🔥",color:"#f87171",km:tempo,details:[`2km calentamiento zona 1 (${z1})`,`${intReps} a ${intPace}`,`${w<=7?"90":"2"}min recuperación zona 1 entre series`,"2km vuelta calma zona 1","Hidratación antes y después"]},
+        4:rec,5:gymB,
+        6:{type:"run",label:`Long Run ${long}km`,icon:"🏃‍♂️",color:"#a78bfa",km:long,details:[`${long}km total`,`Km 1–${+(long-4).toFixed(0)}: zona 2 (${z2})`,`Km ${+(long-3).toFixed(0)}–${+(long-1).toFixed(0)}: soltar a ${tempoPace}`,`Último km: ${lrPace} si tienes piernas`,"Gel en km ${Math.round(long/2)} si llevas más de 75min en pie"]},
+        7:rest,
+      };
+      continue;
+    }
+
+    // Peak phase w 11-16
+    const isPeakEasy=w===12||w===16;
+    if(isPeakEasy){
+      plan[w]={
+        1:{type:"run",label:`Z2 ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2 cómodo`,`Ritmo ${z2}`]},
+        2:gymA,3:rec,
+        4:{type:"run",label:`Tempo ${tempo}km`,icon:"⚡",color:"#fb923c",km:tempo,details:[`1.5km calentamiento`,`${+(tempo-3).toFixed(1)}km a ${tempoPace}`,"1.5km vuelta calma","Semana de ajuste — no forzar"]},
+        5:gymB,
+        6:{type:"run",label:`Largo mod. ${+(long*0.75).toFixed(1)}km`,icon:"🏃‍♂️",color:"#a78bfa",km:+(long*0.75).toFixed(1),details:[`${+(long*0.75).toFixed(1)}km zona 2`,`Ritmo ${z2}`,"Semana de ajuste"]},
+        7:rest,
+      };
+      continue;
+    }
+
+    plan[w]={
+      1:{type:"run",label:`Z2 ${short}km`,icon:"🏃",color:"#4ade80",km:short,details:[`${short}km zona 2`,`Ritmo ${z2}`,"Activación semana pico"]},
+      2:gymA,
+      3:{type:"run",label:`Tempo prog. ${tempo}km`,icon:"⚡",color:"#fb923c",km:tempo,details:[`1.5km calentamiento zona 1`,`${+(tempo-3).toFixed(1)}km tempo progresivo`,`Empezar en ${tempoPace} → terminar más rápido si puedes`,"1.5km vuelta calma"]},
+      4:rec,5:gymB,
+      6:{type:"run",label:`Long Run ${long}km`,icon:"🏃‍♂️",color:"#a78bfa",km:long,details:[`${long}km simulacro`,`Km 1–3: zona 1 calentamiento (${z1})`,`Km 4–${+(long-4).toFixed(0)}: ritmo objetivo carrera 4:58–5:10/km`,`Últimos 3km: zona 2 (${z2}) — baja el ritmo`,`Gel cada 45min, agua cada 5km`,"La tirada más importante del plan"]},
+      7:rest,
+    };
   }
   return plan;
 }
-const PLAN = buildPlan();
 
-const getPhase = w => PHASES.find(p=>p.weeks.includes(w))||PHASES[3];
-const planKmWeek = w => Object.values(PLAN[w]||{}).reduce((s,d)=>s+(d.km||0),0);
-const doneKmWeek = (w,done) => Object.entries(PLAN[w]||{}).reduce((s,[d])=>done[`${w}-${d}`]?s+(PLAN[w][d].km||0):s,0);
-const totalPlanKm = Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+planKmWeek(w),0);
-const fmtPace = mps => { if(!mps)return"--"; const spm=1/mps*1000/60; const m=Math.floor(spm); const s=Math.round((spm-m)*60); return `${m}:${String(s).padStart(2,"0")}`; };
-const fmtDist = m => (m/1000).toFixed(2)+"km";
-const loadLocal = key => { try { return JSON.parse(localStorage.getItem(key)||"null"); } catch { return null; } };
-const saveLocal = (key,val) => { try { localStorage.setItem(key,JSON.stringify(val)); } catch {} };
+const PLAN=buildPlan();
 
-async function exchangeCode(code, secret) {
-  const r = await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:secret,code,grant_type:"authorization_code"})});
-  if(!r.ok) throw new Error("Exchange failed");
-  return r.json();
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+const getPhase=w=>PHASES.find(p=>p.weeks.includes(w))||PHASES[3];
+const planKmWeek=w=>Object.values(PLAN[w]||{}).reduce((s,d)=>s+(d.km||0),0);
+const doneKmWeek=(w,done)=>Object.entries(PLAN[w]||{}).reduce((s,[d])=>done[`${w}-${d}`]?s+(PLAN[w][d].km||0):s,0);
+const totalPlanKm=Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+planKmWeek(w),0);
+const fmtPace=mps=>{if(!mps)return"--";const spm=1/mps*1000/60;const m=Math.floor(spm);const s=Math.round((spm-m)*60);return`${m}:${String(s).padStart(2,"0")}`;};
+const fmtDist=m=>(m/1000).toFixed(2)+"km";
+
+// ── CLOUD SYNC via Anthropic Storage API (shared=true for cross-device) ────────
+// Keys: "u:{uid}:done", "u:{uid}:notes", "u:{uid}:meta"
+async function cloudGet(key){
+  try{const r=await window.storage.get(key,true);return r?JSON.parse(r.value):null;}catch{return null;}
 }
-async function refreshStravaToken(refreshTk, secret) {
-  const r = await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:secret,refresh_token:refreshTk,grant_type:"refresh_token"})});
-  if(!r.ok) throw new Error("Refresh failed");
-  return r.json();
-}
-async function fetchAllActivities(token) {
-  let all=[],page=1,batch;
-  do { const r=await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`,{headers:{Authorization:`Bearer ${token}`}}); batch=await r.json(); all=[...all,...batch]; page++; } while(batch.length===100);
-  return all;
+async function cloudSet(key,val){
+  try{await window.storage.set(key,JSON.stringify(val),true);}catch{}
 }
 
-function App() {
-  const [screen, setScreen]         = useState("select");
-  const [activeUser, setActiveUser] = useState(null);
-  const [appTab, setAppTab]         = useState("plan");
-  const [week, setWeek]             = useState(1);
-  const [modal, setModal]           = useState(null);
-  const [paulaDone, setPaulaDone]   = useState(()=>loadLocal("hm_paula_done")||{});
-  const [daisyDone, setDaisyDone]   = useState(()=>loadLocal("hm_daisy_done")||{});
-  const [paulaStrava, setPaulaStrava] = useState(()=>loadLocal("strava_paula"));
-  const [daisyStrava, setDaisyStrava] = useState(()=>loadLocal("strava_daisy"));
-  const [paulaActs, setPaulaActs]   = useState([]);
-  const [daisyActs, setDaisyActs]   = useState([]);
-  const [secretModal, setSecretModal] = useState(null);
-  const [secretVal, setSecretVal]   = useState("");
-  const [syncing, setSyncing]       = useState(false);
-  const [syncMsg, setSyncMsg]       = useState("");
-  const [planStart, setPlanStart]   = useState(()=>loadLocal("plan_start"));
-  const [dateScreen, setDateScreen] = useState(false);
+// Simple hash for PIN (not cryptographic, just obfuscation for localStorage)
+function hashPin(uid,pin){return btoa(`${uid}:${pin}:hm2025`);}
 
-  const profile     = activeUser ? PROFILES[activeUser] : null;
-  const done        = activeUser==="paula" ? paulaDone : daisyDone;
-  const setDone     = activeUser==="paula" ? setPaulaDone : setDaisyDone;
-  const stravaData  = activeUser==="paula" ? paulaStrava : daisyStrava;
-  const setStravaData = d => { if(activeUser==="paula"){setPaulaStrava(d);saveLocal("strava_paula",d);}else{setDaisyStrava(d);saveLocal("strava_daisy",d);}};
-  const acts        = activeUser==="paula" ? paulaActs : daisyActs;
+function loadLocal(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch{return null;}}
+function saveLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 
+// ── APP ────────────────────────────────────────────────────────────────────────
+function App(){
+  const[screen,setScreen]=useState("select"); // select|login|app
+  const[activeUser,setActiveUser]=useState(null);
+  const[appTab,setAppTab]=useState("plan");
+  const[week,setWeek]=useState(1);
+  const[modal,setModal]=useState(null);
+  const[noteModal,setNoteModal]=useState(null); // {week,day,existing}
+  const[noteText,setNoteText]=useState("");
+
+  // Per-user data (loaded from cloud on login)
+  const[paulaDone,setPaulaDone]=useState({});
+  const[daisyDone,setDaisyDone]=useState({});
+  const[paulaNotes,setPaulaNotes]=useState({});
+  const[daisyNotes,setDaisyNotes]=useState({});
+  const[planStart,setPlanStart]=useState(()=>loadLocal("plan_start"));
+  const[dateScreen,setDateScreen]=useState(false);
+
+  // Strava
+  const[paulaStrava,setPaulaStrava]=useState(()=>loadLocal("strava_paula"));
+  const[daisyStrava,setDaisyStrava]=useState(()=>loadLocal("strava_daisy"));
+  const[paulaActs,setPaulaActs]=useState([]);
+  const[daisyActs,setDaisyActs]=useState([]);
+  const[syncing,setSyncing]=useState(false);
+  const[syncMsg,setSyncMsg]=useState("");
+  const[secretModal,setSecretModal]=useState(null);
+  const[secretVal,setSecretVal]=useState("");
+
+  // PIN login
+  const[pinInput,setPinInput]=useState("");
+  const[pinError,setPinError]=useState("");
+  const[loadingUser,setLoadingUser]=useState(false);
+  const[pendingUser,setPendingUser]=useState(null);
+
+  const CLIENT_ID="214998";
+  const REDIRECT_URI=window.location.href.split("?")[0].split("#")[0];
+
+  // Derived
+  const profile=activeUser?PROFILES[activeUser]:null;
+  const done=activeUser==="paula"?paulaDone:daisyDone;
+  const notes=activeUser==="paula"?paulaNotes:daisyNotes;
+  const stravaData=activeUser==="paula"?paulaStrava:daisyStrava;
+  const acts=activeUser==="paula"?paulaActs:daisyActs;
+
+  function setDone(d){if(activeUser==="paula")setPaulaDone(d);else setDaisyDone(d);}
+  function setNotes(n){if(activeUser==="paula")setPaulaNotes(n);else setDaisyNotes(n);}
+  function setStravaData(d){
+    if(activeUser==="paula"){setPaulaStrava(d);saveLocal("strava_paula",d);}
+    else{setDaisyStrava(d);saveLocal("strava_daisy",d);}
+  }
+
+  // Handle Strava redirect
   useEffect(()=>{
-    const params = new URLSearchParams(window.location.search);
-    const code   = params.get("code");
-    const userId = params.get("state");
-    if(code && userId){
+    const params=new URLSearchParams(window.location.search);
+    const code=params.get("code");
+    const uid=params.get("state");
+    if(code&&uid){
       window.history.replaceState({},"",window.location.pathname);
-      const stored = loadLocal(`strava_${userId}`);
-      if(stored?.clientSecret){ doExchange(userId,code,stored.clientSecret); }
-      else { setSecretModal({userId,code}); setScreen("app"); setActiveUser(userId); }
+      const stored=loadLocal(`strava_${uid}`);
+      if(stored?.clientSecret){doExchange(uid,code,stored.clientSecret);}
+      else{setSecretModal({userId:uid,code});setActiveUser(uid);setScreen("app");}
     }
   },[]);
 
-  function stravaAuthUrl(uid){ return `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${STRAVA_SCOPE}&state=${uid}`; }
+  // Login flow
+  async function startLogin(uid){
+    setPendingUser(uid);setPinInput("");setPinError("");
+    setScreen("login");
+  }
 
-  async function doExchange(userId,code,secret){
+  async function submitPin(){
+    if(!pinInput.trim()){setPinError("Ingresa tu contraseña");return;}
+    const p=PROFILES[pendingUser];
+    if(pinInput!==p.pin){setPinError("Contraseña incorrecta ❌");return;}
+    setLoadingUser(true);
+    // Load cloud data
+    const cloudDone=await cloudGet(`u:${pendingUser}:done`)||{};
+    const cloudNotes=await cloudGet(`u:${pendingUser}:notes`)||{};
+    const cloudMeta=await cloudGet(`u:${pendingUser}:meta`)||{};
+    if(pendingUser==="paula"){setPaulaDone(cloudDone);setPaulaNotes(cloudNotes);}
+    else{setDaisyDone(cloudDone);setDaisyNotes(cloudNotes);}
+    if(cloudMeta.planStart&&!planStart){saveLocal("plan_start",cloudMeta.planStart);setPlanStart(cloudMeta.planStart);}
+    setActiveUser(pendingUser);
+    setLoadingUser(false);
+    if(!planStart&&!cloudMeta.planStart)setDateScreen(true);
+    setScreen("app");
+    setPinInput("");
+  }
+
+  async function toggleDone(w,d){
+    const k=`${w}-${d}`;
+    const newDone={...done};
+    newDone[k]?delete newDone[k]:(newDone[k]={manual:true});
+    setDone(newDone);
+    await cloudSet(`u:${activeUser}:done`,newDone);
+  }
+
+  async function saveNote(w,d,text){
+    const k=`${w}-${d}`;
+    const newNotes={...notes};
+    if(text.trim())newNotes[k]={text:text.trim(),date:new Date().toISOString()};
+    else delete newNotes[k];
+    setNotes(newNotes);
+    await cloudSet(`u:${activeUser}:notes`,newNotes);
+  }
+
+  // Strava
+  function stravaAuthUrl(uid){return`https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=activity:read_all&state=${uid}`;}
+
+  async function doExchange(uid,code,secret){
     setSyncing(true);setSyncMsg("Conectando con Strava...");
     try{
-      const data=await exchangeCode(code,secret);
+      const r=await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:secret,code,grant_type:"authorization_code"})});
+      const data=await r.json();
       const sd={accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:data.expires_at,clientSecret:secret,athlete:data.athlete};
-      saveLocal(`strava_${userId}`,sd);
-      userId==="paula"?setPaulaStrava(sd):setDaisyStrava(sd);
+      saveLocal(`strava_${uid}`,sd);
+      uid==="paula"?setPaulaStrava(sd):setDaisyStrava(sd);
       setSyncMsg("¡Conectado! Cargando actividades...");
-      await doLoadActivities(userId,data.access_token);
-    }catch(e){setSyncMsg("❌ Error — verifica el Client Secret");}
+      await doLoadActivities(uid,data.access_token);
+    }catch(e){setSyncMsg("❌ Error — verifica tu Client Secret");}
     setSyncing(false);setSecretModal(null);
   }
 
-  async function getValidToken(uid){
-    const sd=loadLocal(`strava_${uid}`);
-    if(!sd)return null;
-    if(Date.now()/1000<sd.expiresAt-60)return sd.accessToken;
-    const data=await refreshStravaToken(sd.refreshToken,sd.clientSecret);
-    const updated={...sd,accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:data.expires_at};
-    saveLocal(`strava_${uid}`,updated);
-    uid==="paula"?setPaulaStrava(updated):setDaisyStrava(updated);
-    return data.access_token;
-  }
-
   async function doLoadActivities(uid,tokenOverride){
-    setSyncing(true);setSyncMsg("Sincronizando actividades...");
+    setSyncing(true);setSyncMsg("Sincronizando...");
     try{
-      const token=tokenOverride||await getValidToken(uid);
-      if(!token)throw new Error("No token");
-      const all=await fetchAllActivities(token);
+      const sd=loadLocal(`strava_${uid}`);
+      let token=tokenOverride||sd?.accessToken;
+      if(sd&&Date.now()/1000>sd.expiresAt-60){
+        const r=await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:sd.clientSecret,refresh_token:sd.refreshToken,grant_type:"refresh_token"})});
+        const data=await r.json();
+        token=data.access_token;
+        const updated={...sd,accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:data.expires_at};
+        saveLocal(`strava_${uid}`,updated);
+        uid==="paula"?setPaulaStrava(updated):setDaisyStrava(updated);
+      }
+      let all=[],page=1,batch;
+      do{const r=await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`,{headers:{Authorization:`Bearer ${token}`}});batch=await r.json();all=[...all,...batch];page++;}while(batch.length===100);
       const runs=all.filter(a=>a.type==="Run"||a.type==="TrailRun");
       uid==="paula"?setPaulaActs(runs):setDaisyActs(runs);
       if(planStart)autoMark(uid,runs,planStart);
-      setSyncMsg(`✓ ${runs.length} carreras sincronizadas`);
+      setSyncMsg(`✓ ${runs.length} carreras cargadas`);
       setTimeout(()=>setSyncMsg(""),3000);
     }catch(e){setSyncMsg("❌ Error al sincronizar");}
     setSyncing(false);
@@ -177,52 +323,44 @@ function App() {
 
   function autoMark(uid,activities,startDate){
     const start=new Date(startDate);
-    const prevDone=uid==="paula"?{...paulaDone}:{...daisyDone};
-    const newDone={...prevDone};
+    const prev=uid==="paula"?{...paulaDone}:{...daisyDone};
+    const newDone={...prev};
     activities.forEach(act=>{
-      const actDate=new Date(act.start_date_local);
-      const diff=Math.floor((actDate-start)/86400000);
+      const ad=new Date(act.start_date_local);
+      const diff=Math.floor((ad-start)/86400000);
       if(diff<0)return;
       const w=Math.floor(diff/7)+1;
-      const d=(actDate.getDay()+6)%7+1;
-      if(w>=1&&w<=21&&PLAN[w]?.[d]){
+      const d=(ad.getDay()+6)%7+1;
+      if(w>=1&&w<=21&&PLAN[w]?.[d])
         newDone[`${w}-${d}`]={auto:true,stravaId:act.id,name:act.name,distance:act.distance,time:act.moving_time,pace:act.average_speed,hr:act.average_heartrate};
-      }
     });
-    if(uid==="paula"){setPaulaDone(newDone);saveLocal("hm_paula_done",newDone);}
-    else{setDaisyDone(newDone);saveLocal("hm_daisy_done",newDone);}
+    if(uid==="paula")setPaulaDone(newDone);else setDaisyDone(newDone);
+    cloudSet(`u:${uid}:done`,newDone);
   }
 
-  function toggleDone(w,d){
-    const k=`${w}-${d}`;const newDone={...done};
-    newDone[k]?delete newDone[k]:(newDone[k]={manual:true});
-    setDone(newDone);
-    saveLocal(`hm_${activeUser}_done`,newDone);
-  }
-
+  // Stats
   const totalKmDone=uid=>Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+doneKmWeek(w,uid==="paula"?paulaDone:daisyDone),0);
   const adherence=uid=>{const d=uid==="paula"?paulaDone:daisyDone;const td=Object.values(d).filter(Boolean).length;const ts=Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+Object.keys(PLAN[w]||{}).length,0);return ts>0?Math.round((td/ts)*100):0;};
   const avgPace=uid=>{const a=uid==="paula"?paulaActs:daisyActs;if(!a.length)return null;return a.reduce((s,x)=>s+x.average_speed,0)/a.length;};
   const weekKmDone=uid=>doneKmWeek(week,uid==="paula"?paulaDone:daisyDone);
 
-  // ── SELECT ──
-  if(screen==="select") return (
-    <div style={{minHeight:"100vh",background:"#07070f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',sans-serif"}}>
-      <GoogleFonts/>
+  // ── SELECT SCREEN ────────────────────────────────────────────────────────────
+  if(screen==="select")return(
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#07070f 60%,#0f0a1a)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
       <div style={{textAlign:"center",marginBottom:36}}>
         <div style={{fontSize:52,marginBottom:10}}>🏁</div>
-        <h1 style={{fontFamily:"'Space Mono',monospace",fontSize:22,fontWeight:700,color:"#fff",letterSpacing:-0.5}}>MEDIA MARATÓN DÚO</h1>
-        <p style={{color:"#555",fontSize:13,marginTop:6}}>21 semanas · 21.1km · Paula & Daisy</p>
+        <h1 style={{fontFamily:"'Space Mono',monospace",fontSize:22,fontWeight:700,letterSpacing:-0.5}}>MEDIA MARATÓN DÚO</h1>
+        <p style={{color:"#555",fontSize:13,marginTop:6}}>21 semanas · 1:45 meta · Paula & Daisy</p>
       </div>
       <div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:340}}>
         {Object.values(PROFILES).map(p=>{
           const km=totalKmDone(p.id);const adh=adherence(p.id);
           return(
-            <button key={p.id} onClick={()=>{setActiveUser(p.id);if(!planStart)setDateScreen(true);setScreen("app");}}
-              style={{background:"#0f0f1a",border:`2px solid ${p.color}44`,borderRadius:18,padding:"18px 20px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .2s"}}>
-              <div style={{width:50,height:50,borderRadius:14,background:`${p.color}22`,border:`2px solid ${p.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{p.emoji}</div>
+            <button key={p.id} onClick={()=>startLogin(p.id)}
+              style={{background:"#0f0f1a",border:`2px solid ${p.color}44`,borderRadius:18,padding:"18px 22px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,transition:"all .2s",width:"100%"}}>
+              <div style={{width:52,height:52,borderRadius:14,background:`${p.color}22`,border:`2px solid ${p.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{p.emoji}</div>
               <div style={{flex:1}}>
-                <div style={{fontFamily:"'Space Mono',monospace",fontWeight:700,fontSize:17,color:"#fff"}}>{p.name}</div>
+                <div style={{fontFamily:"'Space Mono',monospace",fontWeight:700,fontSize:18,color:"#fff"}}>{p.name}</div>
                 <div style={{fontSize:11,color:"#555",marginTop:3}}>{km.toFixed(1)}km · {adh}% adherencia</div>
               </div>
               <div style={{fontSize:18,color:p.color}}>→</div>
@@ -230,51 +368,89 @@ function App() {
           );
         })}
       </div>
-      <div style={{marginTop:28,width:"100%",maxWidth:340,background:"#0f0f1a",borderRadius:14,padding:"14px 16px",border:"1px solid #1a1a28"}}>
+      {/* Mini versus */}
+      <div style={{marginTop:24,width:"100%",maxWidth:340,background:"#0f0f1a",borderRadius:14,padding:"14px 16px",border:"1px solid #1a1a28"}}>
         <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>⚔️ Versus — semana {week}</div>
         {["paula","daisy"].map(uid=>{
-          const p=PROFILES[uid];const km=weekKmDone(uid);const maxKm=Math.max(weekKmDone("paula"),weekKmDone("daisy"),planKmWeek(week),1);
+          const p=PROFILES[uid];const km=weekKmDone(uid);const max=Math.max(weekKmDone("paula"),weekKmDone("daisy"),planKmWeek(week),0.1);
           return(<div key={uid} style={{marginBottom:8}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"#888"}}>{p.emoji} {p.name}</span><span style={{fontFamily:"'Space Mono',monospace",fontSize:11,color:p.color}}>{km.toFixed(1)}km</span></div>
-            <div style={{height:5,background:"#141420",borderRadius:3}}><div style={{height:"100%",borderRadius:3,background:p.color,width:`${(km/maxKm)*100}%`,transition:"width .6s"}}/></div>
+            <div style={{height:5,background:"#141420",borderRadius:3}}><div style={{height:"100%",borderRadius:3,background:p.color,width:`${(km/max)*100}%`,transition:"width .6s"}}/></div>
           </div>);
         })}
       </div>
     </div>
   );
 
-  if(dateScreen) return(
-    <div style={{minHeight:"100vh",background:"#07070f",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',sans-serif"}}>
-      <GoogleFonts/>
-      <div style={{maxWidth:360,width:"100%",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:10}}>{profile?.emoji}</div>
+  // ── LOGIN SCREEN ─────────────────────────────────────────────────────────────
+  if(screen==="login"){
+    const p=PROFILES[pendingUser]||{};
+    return(
+      <div style={{minHeight:"100vh",background:"#07070f",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+        <div style={{maxWidth:360,width:"100%",background:"#0f0f1a",borderRadius:20,padding:"28px 24px",border:`1px solid ${p.color}33`}}>
+          <button onClick={()=>{setScreen("select");setPinError("");setPinInput("");}} style={{background:"transparent",border:"none",color:"#555",cursor:"pointer",fontSize:12,marginBottom:16}}>← Volver</button>
+          <div style={{textAlign:"center",marginBottom:24}}>
+            <div style={{fontSize:42,marginBottom:8}}>{p.emoji}</div>
+            <h2 style={{fontFamily:"'Space Mono',monospace",fontSize:18,color:"#fff"}}>{p.name}</h2>
+            <p style={{color:"#555",fontSize:12,marginTop:4}}>Ingresa tu contraseña para sincronizar tus datos en todos tus dispositivos</p>
+          </div>
+          <input
+            type="password" value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinError("");}}
+            onKeyDown={e=>e.key==="Enter"&&submitPin()}
+            placeholder="Contraseña"
+            style={{width:"100%",padding:"13px 16px",borderRadius:10,border:`1px solid ${pinError?"#f87171":"#222"}`,background:"#111",color:"#fff",fontSize:15,marginBottom:8,outline:"none",textAlign:"center",letterSpacing:2}}
+            autoFocus
+          />
+          {pinError&&<p style={{color:"#f87171",fontSize:12,textAlign:"center",marginBottom:8}}>{pinError}</p>}
+          <button onClick={submitPin} disabled={loadingUser}
+            style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:p.color,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",marginTop:4,opacity:loadingUser?0.7:1}}>
+            {loadingUser?"Cargando datos...":"Entrar →"}
+          </button>
+          <p style={{color:"#333",fontSize:10,textAlign:"center",marginTop:16}}>Tus datos se sincronizan automáticamente entre iPhone, iPad y cualquier dispositivo</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── DATE SCREEN ──────────────────────────────────────────────────────────────
+  if(dateScreen)return(
+    <div style={{minHeight:"100vh",background:"#07070f",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{maxWidth:360,width:"100%",textAlign:"center",background:"#0f0f1a",borderRadius:20,padding:"28px 24px",border:`1px solid ${profile.color}33`}}>
+        <div style={{fontSize:40,marginBottom:10}}>{profile.emoji}</div>
         <h2 style={{fontFamily:"'Space Mono',monospace",fontSize:17,marginBottom:6,color:"#fff"}}>¿Cuándo empieza el plan?</h2>
-        <p style={{color:"#666",fontSize:12,marginBottom:20}}>Compartido para Paula y Daisy.</p>
+        <p style={{color:"#666",fontSize:12,marginBottom:20}}>Compartido para Paula y Daisy — el mismo calendario para las dos.</p>
         <input type="date" id="start-date" defaultValue={new Date().toISOString().split("T")[0]}
-          style={{width:"100%",padding:"11px 14px",borderRadius:10,border:"1px solid #222",background:"#111",color:"#fff",fontSize:14,marginBottom:12,outline:"none"}}/>
-        <button onClick={()=>{const v=document.getElementById("start-date").value;if(!v)return;saveLocal("plan_start",v);setPlanStart(v);setDateScreen(false);}}
-          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:profile?.color,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+          style={{width:"100%",padding:"12px 16px",borderRadius:10,border:"1px solid #222",background:"#111",color:"#fff",fontSize:14,marginBottom:14,outline:"none"}}/>
+        <button onClick={async()=>{
+          const v=document.getElementById("start-date").value;if(!v)return;
+          saveLocal("plan_start",v);setPlanStart(v);
+          await cloudSet(`u:${activeUser}:meta`,{planStart:v});
+          setDateScreen(false);
+        }} style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:profile.color,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>
           Comenzar plan →
         </button>
       </div>
     </div>
   );
 
-  const phase=getPhase(week);const weekDays=PLAN[week]||{};
-  const wKmDone=doneKmWeek(week,done);const wKmPlan=planKmWeek(week);
+  // ── MAIN APP ─────────────────────────────────────────────────────────────────
+  const phase=getPhase(week);
+  const weekDays=PLAN[week]||{};
+  const wKmDone=doneKmWeek(week,done);
+  const wKmPlan=planKmWeek(week);
   const myTotalKm=totalKmDone(activeUser);
 
   return(
-    <div style={{minHeight:"100vh",background:"#07070f",color:"#f0f0f0",fontFamily:"'DM Sans',sans-serif"}}>
-      <GoogleFonts/>
+    <div style={{minHeight:"100vh",background:"#07070f",color:"#f0f0f0"}}>
 
+      {/* Secret modal */}
       {secretModal&&(
-        <div style={{position:"fixed",inset:0,background:"#000000dd",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:20}}>
-          <div style={{background:"#111121",borderRadius:16,padding:22,width:"100%",maxWidth:360,border:`1px solid ${PROFILES[secretModal.userId].color}44`}}>
+        <div style={{position:"fixed",inset:0,background:"#000000ee",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:20}}>
+          <div style={{background:"#111121",borderRadius:16,padding:24,width:"100%",maxWidth:360,border:`1px solid ${PROFILES[secretModal.userId].color}44`}}>
             <div style={{fontSize:30,textAlign:"center",marginBottom:10}}>{PROFILES[secretModal.userId].emoji}</div>
             <h3 style={{fontFamily:"'Space Mono',monospace",fontSize:15,textAlign:"center",marginBottom:6}}>Client Secret de Strava</h3>
             <p style={{color:"#666",fontSize:11,textAlign:"center",marginBottom:14}}>Solo se guarda en este dispositivo.</p>
-            <input type="password" value={secretVal} onChange={e=>setSecretVal(e.target.value)} placeholder="Pega tu Client Secret aquí"
+            <input type="password" value={secretVal} onChange={e=>setSecretVal(e.target.value)} placeholder="Pega tu Client Secret"
               style={{width:"100%",padding:"11px",borderRadius:8,border:"1px solid #222",background:"#0a0a14",color:"#fff",fontSize:12,marginBottom:10,outline:"none"}}/>
             <button onClick={()=>{if(!secretVal.trim())return;doExchange(secretModal.userId,secretModal.code,secretVal.trim());setSecretVal("");}}
               style={{width:"100%",padding:"11px",borderRadius:8,border:"none",background:"#fc4c02",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer"}}>Conectar</button>
@@ -283,10 +459,42 @@ function App() {
         </div>
       )}
 
-      <div style={{background:"#0c0c18",borderBottom:"1px solid #141420",padding:"11px 14px"}}>
+      {/* Note modal */}
+      {noteModal&&(
+        <div style={{position:"fixed",inset:0,background:"#000000ee",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,padding:"0 12px 20px"}} onClick={()=>setNoteModal(null)}>
+          <div style={{width:"100%",maxWidth:480,background:"#111121",borderRadius:16,border:`1px solid ${profile.color}44`,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+            <div style={{padding:"16px 16px 12px",borderBottom:"1px solid #1a1a28",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:1}}>Nota del entrenamiento</div>
+                <div style={{fontSize:13,fontWeight:600,color:"#fff",marginTop:2}}>{noteModal.label} · S{noteModal.week} {DAY_NAMES[noteModal.day-1]}</div>
+              </div>
+              <button onClick={()=>setNoteModal(null)} style={{background:"#ffffff10",border:"none",color:"#888",borderRadius:7,width:28,height:28,cursor:"pointer"}}>✕</button>
+            </div>
+            <div style={{padding:16}}>
+              <textarea value={noteText} onChange={e=>setNoteText(e.target.value)}
+                placeholder="¿Cómo te sentiste? ¿Algún dolor? ¿El clima? ¿Tu energía hoy?..."
+                style={{width:"100%",height:120,background:"#0a0a14",border:"1px solid #1a1a28",borderRadius:10,padding:"10px 12px",color:"#f0f0f0",fontSize:13,resize:"none",outline:"none",fontFamily:"'DM Sans',sans-serif"}}
+              />
+              <div style={{display:"flex",gap:8,marginTop:10}}>
+                {noteText.trim()&&<button onClick={async()=>{await saveNote(noteModal.week,noteModal.day,"");setNoteModal(null);}}
+                  style={{padding:"10px 14px",borderRadius:8,border:"1px solid #333",background:"transparent",color:"#666",fontSize:11,cursor:"pointer"}}>
+                  Borrar nota
+                </button>}
+                <button onClick={async()=>{await saveNote(noteModal.week,noteModal.day,noteText);setNoteModal(null);}}
+                  style={{flex:1,padding:"11px",borderRadius:8,border:"none",background:profile.color,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer"}}>
+                  Guardar nota ✓
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <div style={{background:"#0c0c18",borderBottom:"1px solid #141420",padding:"11px 14px",position:"sticky",top:0,zIndex:100}}>
         <div style={{maxWidth:860,margin:"0 auto"}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <button onClick={()=>setScreen("select")} style={{background:"#0f0f1a",border:"1px solid #1a1a28",borderRadius:7,color:"#777",padding:"5px 9px",cursor:"pointer",fontSize:11}}>← Perfiles</button>
+            <button onClick={()=>{setScreen("select");setActiveUser(null);}} style={{background:"#0f0f1a",border:"1px solid #1a1a28",borderRadius:7,color:"#777",padding:"5px 9px",cursor:"pointer",fontSize:11}}>← Salir</button>
             <div style={{display:"flex",alignItems:"center",gap:7,background:`${profile.color}18`,border:`1px solid ${profile.color}44`,borderRadius:9,padding:"5px 11px"}}>
               <span style={{fontSize:14}}>{profile.emoji}</span>
               <span style={{fontWeight:700,fontSize:13,color:profile.color}}>{profile.name}</span>
@@ -328,16 +536,18 @@ function App() {
 
       <div style={{maxWidth:860,margin:"0 auto",padding:"16px 12px"}}>
 
+        {/* ══ PLAN ══ */}
         {appTab==="plan"&&<>
           <div style={{display:"flex",gap:5,marginBottom:12,overflowX:"auto",paddingBottom:2}}>
             {PHASES.map(p=>(
               <div key={p.id} onClick={()=>setWeek(p.weeks[0])}
                 style={{flex:1,minWidth:60,padding:"6px 8px",borderRadius:7,background:"#0f0f1a",border:`1px solid ${p.weeks.includes(week)?p.color:"#141420"}`,cursor:"pointer"}}>
                 <div style={{fontSize:9,fontWeight:700,color:p.color,textTransform:"uppercase"}}>{p.emoji} {p.name}</div>
-                <div style={{fontSize:8,color:"#333",marginTop:1}}>S{p.weeks[0]}-{p.weeks[p.weeks.length-1]}</div>
+                <div style={{fontSize:8,color:"#333",marginTop:1}}>S{p.weeks[0]}–{p.weeks[p.weeks.length-1]}</div>
               </div>
             ))}
           </div>
+
           <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:12}}>
             {Array.from({length:21},(_,i)=>i+1).map(w=>{
               const ph=getPhase(w);const pct=planKmWeek(w)>0?(doneKmWeek(w,done)/planKmWeek(w)):0;const isActive=w===week;
@@ -347,6 +557,7 @@ function App() {
               </button>);
             })}
           </div>
+
           <div style={{background:"#0f0f1a",border:`1px solid ${phase.color}33`,borderRadius:11,padding:"11px 14px",marginBottom:11,display:"flex",alignItems:"center",gap:11}}>
             <div style={{fontSize:22}}>{phase.emoji}</div>
             <div style={{flex:1}}>
@@ -364,50 +575,67 @@ function App() {
               <div style={{height:3,background:"#141420",borderRadius:2,marginTop:4,width:56}}><div style={{height:"100%",borderRadius:2,background:profile.color,width:`${wKmPlan>0?Math.min(100,(wKmDone/wKmPlan)*100):0}%`}}/></div>
             </div>
           </div>
+
+          {/* Day grid */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
             {[1,2,3,4,5,6,7].map(d=>{
-              const data=weekDays[d];const k=`${week}-${d}`;const isDone=!!done[k];const isAuto=done[k]?.auto;
-              if(!data)return<div key={d} style={{background:"#09090f",borderRadius:8,minHeight:88,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:8,color:"#1e1e28",textTransform:"uppercase"}}>{DAY_NAMES[d-1]}</span></div>;
-              return(<div key={d} onClick={()=>setModal({week,day:d,data,k,isDone,stravaInfo:done[k]?.auto?done[k]:null})}
-                style={{background:isDone?`${data.color}12`:"#0f0f1a",border:`1px solid ${isDone?data.color:"#141420"}`,borderRadius:8,padding:"7px 5px",minHeight:88,display:"flex",flexDirection:"column",gap:2,position:"relative",cursor:"pointer",transition:"all .15s"}}>
-                {isDone&&<div style={{position:"absolute",top:3,right:3,fontSize:7,background:isAuto?"#fc4c02":profile.color,color:"#fff",borderRadius:3,padding:"1px 3px",fontWeight:700}}>{isAuto?"⚡":"✓"}</div>}
-                <span style={{fontSize:7,color:"#333",textTransform:"uppercase"}}>{DAY_NAMES[d-1]}</span>
-                <span style={{fontSize:15}}>{data.icon}</span>
-                <span style={{fontSize:8,fontWeight:600,color:isDone?data.color:"#aaa",lineHeight:1.3}}>{data.label}</span>
-                {data.km&&<span style={{fontSize:7,color:isDone?data.color:"#444",marginTop:"auto",fontFamily:"'Space Mono',monospace"}}>{isAuto?fmtDist(done[k].distance):data.km+"km"}</span>}
-              </div>);
+              const data=weekDays[d];const k=`${week}-${d}`;const isDone=!!done[k];const isAuto=done[k]?.auto;const hasNote=!!notes[k];
+              if(!data)return<div key={d} style={{background:"#09090f",borderRadius:8,minHeight:98,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:8,color:"#1e1e28",textTransform:"uppercase"}}>{DAY_NAMES[d-1]}</span></div>;
+              return(
+                <div key={d} style={{background:isDone?`${data.color}12`:"#0f0f1a",border:`1px solid ${isDone?data.color:"#141420"}`,borderRadius:8,padding:"7px 5px",minHeight:98,display:"flex",flexDirection:"column",gap:2,position:"relative",cursor:"pointer",transition:"all .15s"}}
+                  onClick={()=>setModal({week,day:d,data,k,isDone,stravaInfo:done[k]?.auto?done[k]:null})}>
+                  {isDone&&<div style={{position:"absolute",top:3,right:3,fontSize:7,background:isAuto?"#fc4c02":profile.color,color:"#fff",borderRadius:3,padding:"1px 3px",fontWeight:700}}>{isAuto?"⚡":"✓"}</div>}
+                  {hasNote&&<div style={{position:"absolute",top:3,left:3,fontSize:8}}>📝</div>}
+                  <span style={{fontSize:7,color:"#333",textTransform:"uppercase",marginTop:hasNote?6:0}}>{DAY_NAMES[d-1]}</span>
+                  <span style={{fontSize:15}}>{data.icon}</span>
+                  <span style={{fontSize:8,fontWeight:600,color:isDone?data.color:"#aaa",lineHeight:1.3}}>{data.label}</span>
+                  {data.km&&<span style={{fontSize:7,color:isDone?data.color:"#444",marginTop:"auto",fontFamily:"'Space Mono',monospace"}}>{isAuto?fmtDist(done[k].distance):data.km+"km"}</span>}
+                </div>
+              );
             })}
           </div>
+
           <div style={{display:"flex",justifyContent:"space-between",marginTop:12}}>
             <button disabled={week===1} onClick={()=>setWeek(w=>Math.max(1,w-1))} style={{padding:"7px 14px",borderRadius:7,background:"#0f0f1a",border:"1px solid #141420",color:week===1?"#222":"#777",cursor:week===1?"not-allowed":"pointer",fontSize:10}}>← Anterior</button>
             <button disabled={week===21} onClick={()=>setWeek(w=>Math.min(21,w+1))} style={{padding:"7px 14px",borderRadius:7,background:"#0f0f1a",border:"1px solid #141420",color:week===21?"#222":"#777",cursor:week===21?"not-allowed":"pointer",fontSize:10}}>Siguiente →</button>
           </div>
         </>}
 
+        {/* ══ VERSUS ══ */}
         {appTab==="versus"&&(
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            <div style={{background:"#0f0f1a",borderRadius:14,padding:"18px",border:"1px solid #1a1a28"}}>
-              <div style={{textAlign:"center",marginBottom:14}}><span style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:1}}>⚔️ Batalla total</span></div>
+            <div style={{background:"#0f0f1a",borderRadius:14,padding:"18px",border:"1px solid #1a1a28",position:"relative"}}>
+              <div style={{textAlign:"center",marginBottom:14}}><span style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:1}}>⚔️ Batalla · Meta 1:45</span></div>
               <div style={{display:"flex",alignItems:"center"}}>
                 {["paula","daisy"].map(uid=>{
                   const p=PROFILES[uid];const km=totalKmDone(uid);const adh=adherence(uid);
-                  const wins=[totalKmDone(uid)>totalKmDone(uid==="paula"?"daisy":"paula"),adherence(uid)>adherence(uid==="paula"?"daisy":"paula"),(avgPace(uid)||0)>(avgPace(uid==="paula"?"daisy":"paula")||0),weekKmDone(uid)>weekKmDone(uid==="paula"?"daisy":"paula")].filter(Boolean).length;
+                  const wins=[totalKmDone(uid)>totalKmDone(uid==="paula"?"daisy":"paula"),adherence(uid)>adherence(uid==="paula"?"daisy":"paula"),weekKmDone(uid)>weekKmDone(uid==="paula"?"daisy":"paula")].filter(Boolean).length;
                   return(<div key={uid} style={{flex:1,textAlign:"center",padding:"0 6px"}}>
                     <div style={{fontSize:30,marginBottom:4}}>{p.emoji}</div>
                     <div style={{fontFamily:"'Space Mono',monospace",fontWeight:700,fontSize:14,color:p.color}}>{p.name}</div>
                     <div style={{fontFamily:"'Space Mono',monospace",fontSize:24,fontWeight:700,color:"#fff",marginTop:6}}>{km.toFixed(0)}<span style={{fontSize:10,color:"#555"}}>km</span></div>
                     <div style={{fontSize:10,color:"#666",marginTop:1}}>{adh}% adherencia</div>
-                    <div style={{marginTop:6,fontSize:10,color:wins>=2?p.color:"#444",fontWeight:wins>=2?700:400}}>{wins>=2?"👑 Ganando":"Puntaje: "+wins}</div>
+                    <div style={{marginTop:6,fontSize:10,color:wins>=2?p.color:"#444",fontWeight:wins>=2?700:400}}>{wins>=2?"👑 Ganando":"Puntaje: "+wins+"/3"}</div>
                   </div>);
                 })}
                 <div style={{position:"absolute",left:"50%",transform:"translateX(-50%)",fontSize:16,background:"#07070f",border:"1px solid #1a1a28",borderRadius:"50%",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center"}}>⚔️</div>
               </div>
             </div>
+
+            {/* Target pace info */}
+            <div style={{background:"#0f0f1a",borderRadius:11,padding:"12px 14px",border:"1px solid #f87171aa",display:"flex",gap:12,alignItems:"center"}}>
+              <div style={{fontSize:20}}>🎯</div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:"#f87171"}}>Meta: 1:45:00 · 4:58/km</div>
+                <div style={{fontSize:10,color:"#555",marginTop:2}}>Pace actual: 7:20–6:50/km · El plan te lleva ahí progresivamente</div>
+              </div>
+            </div>
+
             {[
               {label:"Km totales",vals:{paula:totalKmDone("paula"),daisy:totalKmDone("daisy")},fmt:v=>`${v.toFixed(1)}km`,higher:true},
-              {label:"Adherencia",vals:{paula:adherence("paula"),daisy:adherence("daisy")},fmt:v=>`${v}%`,higher:true},
-              {label:"Ritmo promedio",vals:{paula:avgPace("paula")||0,daisy:avgPace("daisy")||0},fmt:(v,uid)=>avgPace(uid)?fmtPace(avgPace(uid))+"/km":"--",higher:false},
+              {label:"Adherencia al plan",vals:{paula:adherence("paula"),daisy:adherence("daisy")},fmt:v=>`${v}%`,higher:true},
               {label:`Km semana ${week}`,vals:{paula:weekKmDone("paula"),daisy:weekKmDone("daisy")},fmt:v=>`${v.toFixed(1)}km`,higher:true},
+              {label:"Ritmo Strava (promedio)",vals:{paula:avgPace("paula")||0,daisy:avgPace("daisy")||0},fmt:(v,uid)=>avgPace(uid)?fmtPace(avgPace(uid))+"/km":"--",higher:false},
             ].map((stat,si)=>{
               const pv=stat.vals.paula||0;const dv=stat.vals.daisy||0;const max=Math.max(pv,dv)||1;
               const paulaWins=stat.higher?pv>=dv:(pv>0&&dv>0&&pv<=dv);
@@ -425,6 +653,8 @@ function App() {
                 })}
               </div>);
             })}
+
+            {/* Chart */}
             <div style={{background:"#0f0f1a",borderRadius:11,padding:"12px 14px",border:"1px solid #141420"}}>
               <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Km por semana — ambas</div>
               <div style={{display:"flex",alignItems:"flex-end",gap:2,height:64}}>
@@ -443,6 +673,7 @@ function App() {
           </div>
         )}
 
+        {/* ══ STRAVA ══ */}
         {appTab==="strava"&&(
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {!stravaData?.athlete?(
@@ -478,8 +709,8 @@ function App() {
                 </div>
                 <div style={{background:"#0f0f1a",borderRadius:11,padding:"11px 13px",border:"1px solid #141420"}}>
                   <div style={{fontSize:9,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Actividades recientes</div>
-                  {acts.slice(0,6).map(a=>(
-                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:9,padding:"6px 7px",borderRadius:6,background:"#09090f",border:"1px solid #141420",marginBottom:5}}>
+                  {acts.slice(0,7).map(a=>(
+                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:9,padding:"7px 8px",borderRadius:7,background:"#09090f",border:"1px solid #141420",marginBottom:5}}>
                       <span style={{fontSize:13}}>🏃</span>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:10,fontWeight:600,color:"#ddd",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{a.name}</div>
@@ -489,13 +720,14 @@ function App() {
                         <div style={{fontFamily:"'Space Mono',monospace",fontSize:10,fontWeight:700,color:"#fc4c02"}}>{fmtDist(a.distance)}</div>
                         <div style={{fontSize:8,color:"#555"}}>{fmtPace(a.average_speed)}/km</div>
                       </div>
+                      {a.average_heartrate&&<div style={{textAlign:"right",flexShrink:0}}><div style={{fontSize:9,color:"#f87171"}}>♥{Math.round(a.average_heartrate)}</div></div>}
                     </div>
                   ))}
                   {acts.length===0&&<div style={{textAlign:"center",color:"#333",fontSize:11,padding:"12px"}}>Sin actividades aún 🏃</div>}
                 </div>
                 <button onClick={()=>doLoadActivities(activeUser)} disabled={syncing}
                   style={{padding:"11px",borderRadius:9,border:"none",background:"#fc4c02",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer"}}>
-                  {syncing?"Sincronizando...":"🔄 Sincronizar"}
+                  {syncing?"Sincronizando...":"🔄 Sincronizar actividades"}
                 </button>
                 <button onClick={()=>{saveLocal(`strava_${activeUser}`,null);setStravaData(null);}}
                   style={{padding:"9px",borderRadius:7,border:"1px solid #222",background:"transparent",color:"#555",fontSize:10,cursor:"pointer"}}>
@@ -507,9 +739,10 @@ function App() {
         )}
       </div>
 
+      {/* DAY MODAL */}
       {modal&&(
-        <div style={{position:"fixed",inset:0,background:"#000000dd",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:100,padding:"0 10px 16px"}} onClick={()=>setModal(null)}>
-          <div style={{width:"100%",maxWidth:440,background:"#111121",borderRadius:14,border:`1px solid ${modal.data.color}44`,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"#000000dd",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:150,padding:"0 10px 16px"}} onClick={()=>setModal(null)}>
+          <div style={{width:"100%",maxWidth:460,background:"#111121",borderRadius:16,border:`1px solid ${modal.data.color}44`,overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
             <div style={{background:`linear-gradient(135deg,${modal.data.color}18,transparent)`,padding:"14px 14px 10px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                 <div>
@@ -520,18 +753,27 @@ function App() {
                   </div>
                   {modal.data.km&&<div style={{fontFamily:"'Space Mono',monospace",fontSize:11,color:modal.data.color,marginTop:2}}>{modal.data.km}km planificados</div>}
                 </div>
-                <button onClick={()=>setModal(null)} style={{background:"#ffffff10",border:"none",color:"#888",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12}}>✕</button>
+                <button onClick={()=>setModal(null)} style={{background:"#ffffff10",border:"none",color:"#888",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:13}}>✕</button>
               </div>
             </div>
             {modal.stravaInfo&&(
-              <div style={{padding:"0 14px",marginBottom:3}}>
-                <div style={{background:"#fc4c0215",border:"1px solid #fc4c0230",borderRadius:8,padding:"7px 10px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-                  {[["distancia",fmtDist(modal.stravaInfo.distance),"#fc4c02"],["ritmo",fmtPace(modal.stravaInfo.pace)+"/km","#fc4c02"],["FC",modal.stravaInfo.hr?`♥ ${Math.round(modal.stravaInfo.hr)}`:"--","#f87171"]].map(([l,v,c])=>(
+              <div style={{padding:"0 14px",marginBottom:4}}>
+                <div style={{background:"#fc4c0215",border:"1px solid #fc4c0230",borderRadius:9,padding:"8px 12px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                  {[["distancia",fmtDist(modal.stravaInfo.distance),"#fc4c02"],["ritmo",fmtPace(modal.stravaInfo.pace)+"/km","#fc4c02"],["FC",modal.stravaInfo.hr?`♥${Math.round(modal.stravaInfo.hr)}`:"--","#f87171"]].map(([l,v,c])=>(
                     <div key={l} style={{textAlign:"center"}}><div style={{fontFamily:"'Space Mono',monospace",fontWeight:700,fontSize:11,color:c}}>{v}</div><div style={{fontSize:7,color:"#555",marginTop:1}}>{l}</div></div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Note preview */}
+            {notes[modal.k]&&(
+              <div style={{margin:"0 14px 4px",background:"#1a1a2e",borderRadius:8,padding:"8px 10px",border:"1px solid #2a2a48"}}>
+                <div style={{fontSize:8,color:"#555",textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>📝 Tu nota</div>
+                <div style={{fontSize:11,color:"#aaa",lineHeight:1.5}}>{notes[modal.k].text}</div>
+              </div>
+            )}
+
             <div style={{padding:"0 14px 14px"}}>
               <div style={{display:"flex",flexDirection:"column",gap:5,marginTop:8}}>
                 {modal.data.details?.map((d,i)=>(
@@ -541,26 +783,22 @@ function App() {
                   </div>
                 ))}
               </div>
-              <button onClick={()=>{toggleDone(modal.week,modal.day);setModal(null);}}
-                style={{marginTop:12,width:"100%",padding:"11px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:modal.isDone?"#141420":profile.color,color:modal.isDone?"#555":"#fff"}}>
-                {modal.isDone?"✗ Marcar como pendiente":"✓ Marcar como completado"}
-              </button>
+              <div style={{display:"flex",gap:8,marginTop:14}}>
+                <button onClick={()=>{setModal(null);setNoteText(notes[modal.k]?.text||"");setNoteModal({week:modal.week,day:modal.day,label:modal.data.label});}}
+                  style={{flex:1,padding:"11px",borderRadius:8,border:`1px solid ${profile.color}44`,background:`${profile.color}11`,color:profile.color,fontWeight:600,fontSize:11,cursor:"pointer"}}>
+                  {notes[modal.k]?"✏️ Editar nota":"📝 Añadir nota"}
+                </button>
+                <button onClick={()=>{toggleDone(modal.week,modal.day);setModal(null);}}
+                  style={{flex:2,padding:"11px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:700,background:modal.isDone?"#141420":modal.data.color,color:modal.isDone?"#555":"#fff"}}>
+                  {modal.isDone?"✗ Marcar pendiente":"✓ Completado"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function GoogleFonts() {
-  useEffect(()=>{
-    const l=document.createElement("link");
-    l.rel="stylesheet";
-    l.href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap";
-    document.head.appendChild(l);
-  },[]);
-  return null;
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
