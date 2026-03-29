@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Media Maratón — Paula & Daisy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#faf8f5;color:#2c2416;font-family:'DM Sans',sans-serif;min-height:100vh}
+  ::-webkit-scrollbar{width:3px}
+  ::-webkit-scrollbar-thumb{background:#d4c9b8;border-radius:2px}
+  input[type=date]::-webkit-calendar-picker-indicator{filter:none;opacity:.6}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState, useEffect, useRef} = React;
+
+// ── PALETTE ───────────────────────────────────────────────────────────────────
+const C = {
+  bg:       "#faf8f5",
+  surface:  "#ffffff",
+  surface2: "#f5f1eb",
+  border:   "#e8e0d4",
+  border2:  "#d4c9b8",
+  text:     "#2c2416",
+  text2:    "#7a6e60",
+  text3:    "#b0a898",
+  terracotta: "#c4622d",
+  sage:     "#5c7a5a",
+  sand:     "#c9a96e",
+  clay:     "#8b5e3c",
+  cream:    "#f0ead8",
+};
+
+// ── NRC-BASED PLAN ────────────────────────────────────────────────────────────
+// Based on Nike Run Club Half Marathon Training Program
+// Adapted for current pace 6:50–7:20/km, target 4:58/km (1:45 HM)
+// 
+// Pace zones (adapted for current fitness):
+// Recovery/Z1:  7:20–7:40/km  (easy conversational)
+// Z2/Easy:      6:50–7:20/km  (aerobic base)
+// 10K pace:     6:20–6:40/km
+// 5K pace:      5:55–6:15/km  (progresses through plan)
+// Tempo:        6:10–6:30/km  → 5:40–6:00/km by week 16
+// HM Goal:      4:58/km
+
+const DAY_NAMES = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+const PHASES = [
+  {id:1, name:"Base",       weeks:[1,2,3,4],           color:C.sage,       emoji:"🌱"},
+  {id:2, name:"Desarrollo", weeks:[5,6,7,8,9,10],      color:C.sand,       emoji:"🔥"},
+  {id:3, name:"Pico",       weeks:[11,12,13,14,15,16], color:C.terracotta, emoji:"⚡"},
+  {id:4, name:"Taper",      weeks:[17,18,19,20,21],    color:C.clay,       emoji:"🎯"},
+];
+
+// NRC workout types
+const T = {
+  recovery: { label:"Recovery Run", icon:"🫁", color:C.sage,       tag:"RECOVERY" },
+  speed:    { label:"Speed Run",    icon:"⚡", color:C.terracotta, tag:"SPEED" },
+  long:     { label:"Long Run",     icon:"🏃", color:C.clay,       tag:"LONG" },
+  gym:      { label:"Fuerza",       icon:"🏋️", color:C.sand,       tag:"GYM" },
+  rest:     { label:"Descanso",     icon:"😴", color:C.text3,      tag:"REST" },
+  race:     { label:"¡CARRERA!",    icon:"🏅", color:C.terracotta, tag:"RACE" },
+};
+
+// NRC 14-week plan mapped to our 21 weeks
+// Week structure: 2 Recovery + 2 Speed + 1 Long + 1 Gym + 1 Rest
+function buildNRCPlan() {
+  const p = {};
+
+  const gymA = { ...T.gym, km:0, details:["Sentadillas 4×10","Peso muerto 3×8","Hip thrust 3×12","Step-up 3×10/lado","Plancha 3×45s","Core rotacional 3×15"] };
+  const gymB = { ...T.gym, km:0, details:["Estocadas 4×12","Glúteo cable 3×15","Peso muerto rumano 3×10","Elevación pantorrilla 4×20","Puente de glúteo 3×15","Abdominales 3×20"] };
+  const rest = { ...T.rest, km:0, details:["Descanso total","Movilidad y estiramientos suaves","Hidratación y nutrición consciente"] };
+
+  // ── BASE PHASE (weeks 1-4) ── NRC weeks 14-11
+  // Rec pace 7:20-7:40 | Easy 6:50-7:20 | Speed intro
+  p[1] = {
+    1: { ...T.recovery, km:3,  details:["15min recovery run","Ritmo muy suave 7:20–7:40/km","Primera semana — escucha tu cuerpo","Cadencia 170spm"] },
+    2: gymA,
+    3: { ...T.speed, km:4.5, label:"Speed: Intervals",   details:["5min calentamiento Z1","8×1min a ritmo 5K (5:55–6:15/km)","1min recuperación entre series","Primer speed run — no te pases"] },
+    4: { ...T.recovery, km:4, details:["25min recovery run","Ritmo conversacional 7:20–7:40/km","Después del speed — recuperar bien"] },
+    5: { ...T.speed, km:5,   label:"Speed: Fartlek",     details:["5min calentamiento","21min fartlek — alterna 1min duro / 2min fácil","Fácil = 6:50/km · Duro = 5:55/km","Vuelta calma 5min"] },
+    6: { ...T.long,  km:5,   label:"Long Run 5K",        details:["5km ritmo progression","Empieza 7:20/km → termina 6:50/km","El run más importante de la semana","Hidratación antes y después"] },
+    7: rest,
+  };
+  p[2] = {
+    1: { ...T.recovery, km:3,  details:["15min recovery run","Ritmo 7:20–7:40/km","Activar piernas"] },
+    2: gymB,
+    3: { ...T.speed, km:5,   label:"Speed: Intervals",   details:["5min calentamiento","1min a ritmo milla · 2min a 5K · 3min a 10K · 2min a 5K · 1min a ritmo milla","1min recuperación entre series","No time, go time!"] },
+    4: { ...T.recovery, km:5.5, details:["35min recovery run","Progression: empieza lento termina a 6:50/km","Con música o podcast"] },
+    5: { ...T.speed, km:6,   label:"Speed: Intervals",   details:["5min calentamiento","4×1:30min 5K pace · 1×1:30min ritmo milla · repite","45s recuperación tras 5K · 1min tras milla","Fuerte y repetido"] },
+    6: { ...T.long,  km:6.5, label:"Long Run 6.5K",      details:["6.5km progression run","Km 1–4: 7:00–7:20/km","Km 5–6.5: 6:40–6:50/km","Buen desayuno 2h antes"] },
+    7: rest,
+  };
+  p[3] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Ritmo suave 7:20–7:40/km"] },
+    2: gymA,
+    3: { ...T.speed, km:5.5, label:"Speed: Hills",       details:["5min calentamiento","5 series: 45s esfuerzo 10K cuesta arriba + 15s máximo esfuerzo","1:15min rec tras 10K · 45s rec tras máximo","Las cuestas construyen fuerza con menos impacto"] },
+    4: { ...T.recovery, km:5, details:["30min recovery run","Fácil, conversacional","Foam roller después"] },
+    5: { ...T.speed, km:6,   label:"Speed: Intervals",   details:["5min calentamiento","3×7min a ritmo 5K (5:55–6:15/km)","2:30min recuperación entre series","Triple 7s — sostenido y controlado"] },
+    6: { ...T.long,  km:8,   label:"Long Run 8K",        details:["8km progression","Km 1–5: 7:00/km","Km 6–8: 6:40/km","Lleva agua"] },
+    7: rest,
+  };
+  // Week 4 = easy/deload
+  p[4] = {
+    1: { ...T.recovery, km:3,  details:["15min fácil","Semana de descarga — muy suave","7:30–7:50/km"] },
+    2: gymB,
+    3: { ...T.speed, km:4,   label:"Speed: Fartlek suave", details:["5min calentamiento","15min fartlek suave — 1min duro / 2min fácil","Semana de descarga — no forzar"] },
+    4: { ...T.recovery, km:4, details:["Semana descarga — 25min suave","7:20–7:40/km"] },
+    5: rest,
+    6: { ...T.long,  km:6,   label:"Largo fácil 6K",     details:["6km todo suave zona 2","Sin presión — semana de descarga","7:00–7:20/km constante"] },
+    7: rest,
+  };
+
+  // ── DESARROLLO (weeks 5-10) ── NRC weeks 10-5
+  p[5] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","7:20–7:40/km — activar"] },
+    2: gymA,
+    3: { ...T.speed, km:6.5, label:"Speed: Intervals",   details:["5min calentamiento","1:30min 5K pace · 3×45s ritmo milla · repite 3x","1min rec entre series","Sneaky speed — mix de paces"] },
+    4: { ...T.recovery, km:5, details:["30min recovery run","Progression suave"] },
+    5: { ...T.speed, km:6,   label:"Speed: Tempo",       details:["5min calentamiento","23min tempo progression","Empieza 6:30/km → termina 6:00/km","Out strong, back fast"] },
+    6: { ...T.long,  km:10,  label:"Long Run 10K",       details:["10km progression run","Km 1–6: 7:00/km","Km 7–10: 6:40/km","Gel o agua en km 5","Gran salto esta semana — bien hidratada"] },
+    7: rest,
+  };
+  p[6] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Ligero y suave"] },
+    2: gymB,
+    3: { ...T.speed, km:7,   label:"Speed: Intervals",   details:["5min calentamiento","20×30s ritmo milla (excepto #1 y #11 a 5K pace)","1min recuperación entre series","Rápido y repetido — confía en el proceso"] },
+    4: { ...T.recovery, km:7, details:["45min recovery con Shalane Flanagan","Progression: 6:50–7:20/km","Disfruta el run"] },
+    5: { ...T.speed, km:7.5, label:"Speed: Hills",       details:["5min calentamiento","3 series: 1min 10K esfuerzo · 45s 5K · 30s ritmo milla cuesta","Rec: 2min tras 10K · 1:30 tras 5K · 1min tras milla","Cuestas y más cuestas — fuerza real"] },
+    6: { ...T.long,  km:12.5, label:"Long Run 12.5K",   details:["12.5km","Km 1–8: zona 2 (6:50–7:10/km)","Km 9–12.5: 6:30/km","Gel en km 6 · agua cada 4km"] },
+    7: rest,
+  };
+  p[7] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Suave y consciente"] },
+    2: gymA,
+    3: { ...T.speed, km:7,   label:"Speed: Intervals",   details:["5min calentamiento","4min rec pace → 1min ritmo milla","3min 10K → 1min milla","2min 5K → 1min milla · 1min milla → 1min best","The Shifter — de lento a rápido sin parar"] },
+    4: { ...T.recovery, km:5, details:["31min recovery","Fácil y constante"] },
+    5: { ...T.speed, km:8,   label:"Speed: Intervals",   details:["5min calentamiento","1min milla · 5min 5K · 10min 10K · 5min 5K · 1min milla","30s rec tras milla · 2:30 tras 5K · 3min tras 10K","Power Pyramid — sube y baja"] },
+    6: { ...T.long,  km:15,  label:"Long Run 15K",       details:["15km","Km 1–9: 6:50–7:00/km","Km 10–13: 6:30/km","Km 14–15: 6:10/km si te sientes bien","Gel km 6 y km 12"] },
+    7: rest,
+  };
+  // Week 8 deload
+  p[8] = {
+    1: { ...T.recovery, km:3,  details:["15min fácil","Semana descarga"] },
+    2: gymB,
+    3: { ...T.speed, km:5,   label:"Speed: Intervals suave", details:["Semana descarga","5min calentamiento","10×2min a 5K pace","1min rec · no forzar"] },
+    4: { ...T.recovery, km:5.5, details:["35min suave","Semana de descarga"] },
+    5: rest,
+    6: { ...T.long,  km:10,  label:"Largo moderado 10K", details:["10km suave zona 2","Sin presión — semana de descarga","6:50–7:10/km"] },
+    7: rest,
+  };
+  p[9] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Volvemos con energía"] },
+    2: gymA,
+    3: { ...T.speed, km:7.5, label:"Speed: Intervals",   details:["5min calentamiento","5×5min a ritmo 10K (6:20–6:40/km)","2min recuperación entre series","5×5×10K — sostenido y fuerte"] },
+    4: { ...T.recovery, km:7, details:["45min recovery","Progression suave 7:20→6:50/km"] },
+    5: { ...T.speed, km:7,   label:"Speed: Fartlek",     details:["5min calentamiento","21min fartlek — 2min duro / 1min fácil","Duro = 5:55–6:10/km · Fácil = 6:50/km","Two hard, one easy"] },
+    6: { ...T.long,  km:16,  label:"Long Run 16K",       details:["16km — gran tirada","Km 1–10: 6:50–7:00/km","Km 11–14: 6:30/km","Km 15–16: 6:10/km","Gel km 6 y km 12 · agua cada 4km","La más larga hasta ahora — celebra"] },
+    7: rest,
+  };
+  p[10] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery suave"] },
+    2: gymB,
+    3: { ...T.speed, km:8,   label:"Speed: Intervals",   details:["5min calentamiento","8min 10K · 4min 5K · 2min ritmo milla · repite 3x","3min rec tras 10K · 2min tras 5K y milla","Long, strong and fast"] },
+    4: { ...T.recovery, km:8, details:["60min recovery con Kipchoge","Progression 7:20→6:50/km","El run más largo de recovery"] },
+    5: { ...T.speed, km:7,   label:"Speed: Tempo",       details:["5min calentamiento","Progression tempo 15min","5min ritmo recovery → 4min 10K → 3min 5K → 2min milla → 1min best","Bring it down — cada bloque más rápido"] },
+    6: { ...T.long,  km:16,  label:"Long Run 16K",       details:["16km — segunda vez","Más cómoda que la vez anterior","Km 1–10: 6:50/km · Km 11–16: 6:20–6:30/km","Gel km 6 y km 12"] },
+    7: rest,
+  };
+
+  // ── PICO (weeks 11-16) ── NRC weeks 4-2
+  p[11] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Entramos en pico — frescas y listas"] },
+    2: gymA,
+    3: { ...T.speed, km:8,   label:"Speed: Intervals",   details:["5min calentamiento","1:30min 5K · 1:30min 10K · 1:30min ritmo milla · repite 3x","1:30min rec entre series","90s — tríos de velocidad"] },
+    4: { ...T.recovery, km:7, details:["45min recovery","Progression 7:20→6:50/km"] },
+    5: { ...T.speed, km:8.5, label:"Speed: Intervals+Tempo", details:["7min calentamiento","3×2min 5K pace · 10min tempo (6:00–6:15/km) · 3×2min 5K","1min rec tras 5K · 2min tras tempo","Speedurance — combo letal"] },
+    6: { ...T.long,  km:13,  label:"Long Run 13K Dress Rehearsal", details:["13km simulacro","Km 1–3: 7:00/km calentamiento","Km 4–10: ritmo objetivo 4:58–5:10/km","Km 11–13: 6:50/km vuelta calma","Primer simulacro de ritmo de carrera 🎯"] },
+    7: rest,
+  };
+  // Week 12 deload pico
+  p[12] = {
+    1: { ...T.recovery, km:3,  details:["15min fácil","Semana de ajuste"] },
+    2: gymB,
+    3: { ...T.speed, km:6,   label:"Speed: Intervals suave", details:["Semana ajuste","5min calentamiento","5×5min a 10K pace suave","2min rec"] },
+    4: { ...T.recovery, km:5.5, details:["35min suave","Semana de ajuste"] },
+    5: rest,
+    6: { ...T.long,  km:11,  label:"Largo suave 11K",    details:["11km zona 2 cómodo","Semana de ajuste","6:50–7:10/km"] },
+    7: rest,
+  };
+  p[13] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Semana pico máxima"] },
+    2: gymA,
+    3: { ...T.speed, km:8,   label:"Speed: Intervals",   details:["5min calentamiento","3min 5K · 4×30s ritmo milla · repite 3x","2min rec tras 5K · 1min tras milla","Stronger, faster"] },
+    4: { ...T.recovery, km:5, details:["5K recovery run","Suave y fluido"] },
+    5: { ...T.speed, km:9,   label:"Speed: Intervals",   details:["6min calentamiento","1min milla · 3min 5K · 5min 10K · 7min rec pace","30s rec tras milla · 1:30 tras 5K · 2:30 tras 10K","In control — pirámide descendente"] },
+    6: { ...T.long,  km:20,  label:"Long Run 20K 🔥",    details:["20km — la tirada cumbre","Km 1–3: 7:00/km","Km 4–14: 6:40–6:50/km","Km 15–18: 6:20/km","Km 19–20: lo que el cuerpo dé","Gel km 6, 12 y 17 · agua cada 4km","Este run te lleva al finish line 💪"] },
+    7: rest,
+  };
+  p[14] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Después del 20K — muy suave"] },
+    2: gymB,
+    3: { ...T.speed, km:7,   label:"Speed: Intervals",   details:["5min calentamiento","5:00 10K pace · 2:30 5K pace · 1:00 ritmo milla · 0:30 best","1:30 rec tras 10K y 5K · 1:00 tras milla y best","Rock n Roller — rueda completa de paces"] },
+    4: { ...T.recovery, km:5.5, details:["35min recovery run","Suave y consciente"] },
+    5: { ...T.speed, km:9,   label:"Speed: Tempo 8K",    details:["2km calentamiento","8km tempo 5:45–6:05/km","2km vuelta calma","8K tempo — la más larga a ritmo sostenido"] },
+    6: { ...T.long,  km:16,  label:"Long Run 16K",       details:["16km","Km 1–10: 6:40–6:50/km","Km 11–16: 6:10–6:20/km","Gel km 6 y km 12"] },
+    7: rest,
+  };
+  p[15] = {
+    1: { ...T.recovery, km:3.5, details:["15min recovery","Penúltima semana pico"] },
+    2: gymA,
+    3: { ...T.speed, km:8,   label:"Speed: Intervals",   details:["5min calentamiento","10×2min a 5K pace","1min rec · excepto #4 y #8 → 2min rec","Deuces — diez bloques de dos"] },
+    4: { ...T.recovery, km:5.5, details:["35min suave"] },
+    5: { ...T.speed, km:7.5, label:"Speed: Fartlek",     details:["5min calentamiento","15min fartlek — 1min duro / 1min fácil","Duro = ritmo 5K · fácil = zona 2","One hard, one easy"] },
+    6: { ...T.long,  km:16,  label:"Long Run 16K",       details:["16km","Km 1–10: 6:40/km","Km 11–16: 5:10–5:20/km — simulacro carrera","¡Ya casi estás lista para la meta! 🎯"] },
+    7: rest,
+  };
+  // Week 16 deload pre-taper
+  p[16] = {
+    1: { ...T.recovery, km:3,  details:["15min fácil","Comenzamos el descenso"] },
+    2: gymB,
+    3: { ...T.speed, km:5,   label:"Speed suave",        details:["Semana transición","Intervals suaves a 10K pace","Sin forzar"] },
+    4: { ...T.recovery, km:4.5, details:["30min suave"] },
+    5: rest,
+    6: { ...T.long,  km:11,  label:"Largo suave 11K",    details:["11km zona 2","6:50–7:10/km","Última semana de volumen antes del taper"] },
+    7: rest,
+  };
+
+  // ── TAPER (weeks 17-21) ── NRC weeks 3-race
+  p[17] = {
+    1: { ...T.recovery, km:3,  details:["15min recovery","Taper comienza — confía en el trabajo hecho"] },
+    2: gymA,
+    3: { ...T.speed, km:7,   label:"Speed: Intervals",   details:["5min calentamiento","8min 10K · 4min 5K · 2min milla · 3x","Última semana de calidad alta","Long, strong and fast — por última vez"] },
+    4: { ...T.recovery, km:8, details:["60min con Kipchoge","Progression lenta 7:30→7:00/km"] },
+    5: { ...T.speed, km:6.5, label:"Speed: Tempo",       details:["5min calentamiento","Progression 15min descendente","5→4→3→2→1min por paces","Bring it down"] },
+    6: { ...T.long,  km:11,  label:"60min Progression",  details:["~11km en 60min","Empieza 7:30/km · termina 6:30/km","Cómoda y controlada","Ya tienes todo lo que necesitas"] },
+    7: rest,
+  };
+  p[18] = {
+    1: { ...T.recovery, km:3,  details:["15min fácil","El volumen baja — la calidad sube"] },
+    2: gymB,
+    3: { ...T.speed, km:6,   label:"Speed: Intervals",   details:["5min calentamiento","3min 5K · 4×30s milla · repite 3x","2min rec tras 5K · 1min tras milla","Stronger, faster — versión taper"] },
+    4: { ...T.recovery, km:5, details:["5K recovery run suave"] },
+    5: { ...T.speed, km:7,   label:"Speed: Intervals",   details:["6min calentamiento","1min milla · 3min 5K · 5min 10K · 7min rec","30s·1:30·2:30 recuperaciones","In control — confianza total"] },
+    6: { ...T.long,  km:11,  label:"Long Run 11K",       details:["11km","Km 1–7: 6:50/km","Km 8–11: 6:20–6:30/km","Fresquita y confiada"] },
+    7: rest,
+  };
+  p[19] = {
+    1: { ...T.recovery, km:3,  details:["15min muy suave","Dos semanas para la meta"] },
+    2: rest,
+    3: { ...T.speed, km:5.5, label:"Speed: Intervals pre-race", details:["5min calentamiento","1min 5K · 2min 10K · 5min ritmo media maratón · 2min 10K · 1min 5K","1min rec entre todos","The Speed Run Before — adelanta la carrera en tu cabeza"] },
+    4: { ...T.recovery, km:4, details:["25min recovery muy suave"] },
+    5: { ...T.recovery, km:3.2, details:["20min suave","Dos recovery runs esta semana — mucho descanso"] },
+    6: { ...T.long,  km:8.5,  label:"Long Run 8.5K",     details:["7 millas suaves","Km 1–5: 7:00/km","Km 6–8.5: 6:40/km","Última tirada larga — ya estás lista"] },
+    7: rest,
+  };
+  p[20] = {
+    1: { ...T.recovery, km:2.5, details:["15min muy fácil","Última semana de prep"] },
+    2: rest,
+    3: { ...T.speed, km:3.5, label:"Speed: Activación",  details:["5min calentamiento","1min 5K · 2min 10K · 5min ritmo HM · 2min 10K · 1min 5K","Activar las piernas sin fatigar","The Speed Run Before — versión final"] },
+    4: { ...T.recovery, km:4, details:["25min recovery con Headspace","Visualiza la carrera"] },
+    5: { ...T.recovery, km:3.2, details:["20min suave","Conservar energía"] },
+    6: { ...T.long,  km:5,   label:"Último run largo 5K", details:["5km muy suave","7:10–7:30/km","Últimas zancadas antes de la carrera","Disfruta cada paso"] },
+    7: rest,
+  };
+  p[21] = {
+    1: { ...T.recovery, km:2.5, details:["15min recovery suave","Semana de carrera — siente las piernas","No fatigar"] },
+    2: rest,
+    3: { ...T.speed, km:2,   label:"Strides cortos",     details:["10min suave","4×80m acelerones","Recuperación completa","Solo despertar el sistema nervioso"] },
+    4: rest,
+    5: rest,
+    6: { ...T.race,  km:21.1, label:"🏁 MEDIA MARATÓN",  details:["¡El gran día! Meta: 1:45:00 (4:58/km)","Desayuno habitual 2.5h antes","Calentar 15min muy suave","Km 1–5: NO salir rápido — 5:05–5:10/km","Km 5–15: ritmo objetivo 4:58/km","Km 15–21: corazón y piernas 💪","¡Paula y Daisy al finish line! 🎉🎉"] },
+    7: rest,
+  };
+  return p;
+}
+
+const PLAN = buildNRCPlan();
+
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+const getPhase = w => PHASES.find(p=>p.weeks.includes(w))||PHASES[3];
+const planKmWeek = w => Object.values(PLAN[w]||{}).reduce((s,d)=>s+(d.km||0),0);
+const doneKmWeek = (w,done) => Object.entries(PLAN[w]||{}).reduce((s,[d])=>done[`${w}-${d}`]?s+(PLAN[w][d].km||0):s,0);
+const totalPlanKm = Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+planKmWeek(w),0);
+const fmtPace = mps => { if(!mps)return"--"; const spm=1/mps*1000/60; const m=Math.floor(spm); const s=Math.round((spm-m)*60); return `${m}:${String(s).padStart(2,"0")}`; };
+const fmtDist = m => (m/1000).toFixed(2)+"km";
+
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+// localStorage: tokens + user prefs
+// window.storage (shared=true): done sessions + notes (cross-device)
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)||"null"); } catch { return null; } },
+  set: (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} },
+};
+const Cloud = {
+  get: async k => { try { const r=await window.storage.get(k,true); return r?JSON.parse(r.value):null; } catch { return null; } },
+  set: async (k,v) => { try { await window.storage.set(k,JSON.stringify(v),true); } catch {} },
+};
+
+// ── APP ────────────────────────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen]   = useState("select"); // select|login|setup|app
+  const [activeUser, setUser] = useState(null);
+  const [tab, setTab]         = useState("plan");
+  const [week, setWeek]       = useState(1);
+  const [modal, setModal]     = useState(null);
+  const [noteModal, setNoteModal] = useState(null);
+  const [noteText, setNoteText]   = useState("");
+
+  // User data
+  const [paulaDone,  setPaulaDone]  = useState({});
+  const [daisyDone,  setDaisyDone]  = useState({});
+  const [paulaNotes, setPaulaNotes] = useState({});
+  const [daisyNotes, setDaisyNotes] = useState({});
+  const [planStart,  setPlanStart]  = useState(()=>LS.get("plan_start"));
+
+  // Strava
+  const [paulaStrava, setPaulaStrava] = useState(()=>LS.get("strava_paula"));
+  const [daisyStrava, setDaisyStrava] = useState(()=>LS.get("strava_daisy"));
+  const [paulaActs, setPaulaActs] = useState([]);
+  const [daisyActs, setDaisyActs] = useState([]);
+  const [syncing,   setSyncing]   = useState(false);
+  const [syncMsg,   setSyncMsg]   = useState("");
+  const [secretModal, setSecretModal] = useState(null);
+  const [secretVal,   setSecretVal]   = useState("");
+
+  // Login
+  const [pendingUser, setPendingUser] = useState(null);
+  const [pinInput,    setPinInput]    = useState("");
+  const [pinError,    setPinError]    = useState("");
+  const [loading,     setLoading]     = useState(false);
+
+  // Setup (first time user)
+  const [setupName,     setSetupName]     = useState("");
+  const [setupPassword, setSetupPassword] = useState("");
+  const [setupConfirm,  setSetupConfirm]  = useState("");
+  const [setupError,    setSetupError]    = useState("");
+  const [setupUser,     setSetupUser]     = useState(null); // "paula"|"daisy"
+
+  const CLIENT_ID   = "214998";
+  const REDIRECT_URI = window.location.href.split("?")[0].split("#")[0];
+
+  // Derived shortcuts
+  const profile    = activeUser ? getUserProfile(activeUser) : null;
+  const done       = activeUser==="paula" ? paulaDone : daisyDone;
+  const notes      = activeUser==="paula" ? paulaNotes : daisyNotes;
+  const stravaData = activeUser==="paula" ? paulaStrava : daisyStrava;
+  const acts       = activeUser==="paula" ? paulaActs : daisyActs;
+
+  function getUserProfile(uid) {
+    const saved = LS.get(`profile_${uid}`);
+    const defaults = {
+      paula: { id:"paula", name:"Paula", emoji:"🔥", color:C.terracotta },
+      daisy: { id:"daisy", name:"Daisy", emoji:"🌸", color:C.sand },
+    };
+    return saved ? { ...defaults[uid], ...saved } : defaults[uid];
+  }
+
+  function setDone(d) { if(activeUser==="paula"){setPaulaDone(d);}else{setDaisyDone(d);} }
+  function setNotes(n){ if(activeUser==="paula"){setPaulaNotes(n);}else{setDaisyNotes(n);} }
+  function setStravaData(d) {
+    if(activeUser==="paula"){setPaulaStrava(d);LS.set("strava_paula",d);}
+    else{setDaisyStrava(d);LS.set("strava_daisy",d);}
+  }
+
+  // Handle Strava redirect
+  useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code"); const uid = params.get("state");
+    if(code&&uid){
+      window.history.replaceState({},"",window.location.pathname);
+      const sd = LS.get(`strava_${uid}`);
+      if(sd?.clientSecret) doExchange(uid,code,sd.clientSecret);
+      else { setSecretModal({userId:uid,code}); setUser(uid); setScreen("app"); }
+    }
+  },[]);
+
+  // Load cloud data on login
+  async function loadUserData(uid) {
+    setLoading(true);
+    const [d,n,meta] = await Promise.all([
+      Cloud.get(`u:${uid}:done`),
+      Cloud.get(`u:${uid}:notes`),
+      Cloud.get(`u:${uid}:meta`),
+    ]);
+    if(uid==="paula"){ setPaulaDone(d||{}); setPaulaNotes(n||{}); }
+    else { setDaisyDone(d||{}); setDaisyNotes(n||{}); }
+    if(meta?.planStart && !planStart){ LS.set("plan_start",meta.planStart); setPlanStart(meta.planStart); }
+    setLoading(false);
+  }
+
+  // Check if user has set up a password
+  function hasSetup(uid) { return !!LS.get(`pwd_${uid}`); }
+
+  async function handleSelectUser(uid) {
+    if(!hasSetup(uid)) { setSetupUser(uid); setScreen("setup"); }
+    else { setPendingUser(uid); setPinInput(""); setPinError(""); setScreen("login"); }
+  }
+
+  async function handleSetup() {
+    if(!setupPassword.trim()) { setSetupError("Ingresa una contraseña"); return; }
+    if(setupPassword !== setupConfirm) { setSetupError("Las contraseñas no coinciden"); return; }
+    if(setupPassword.length < 4) { setSetupError("Mínimo 4 caracteres"); return; }
+    LS.set(`pwd_${setupUser}`, btoa(setupPassword));
+    await loadUserData(setupUser);
+    setUser(setupUser);
+    if(!planStart) setScreen("dateSetup");
+    else setScreen("app");
+    setSetupName(""); setSetupPassword(""); setSetupConfirm(""); setSetupError("");
+  }
+
+  async function handleLogin() {
+    const stored = LS.get(`pwd_${pendingUser}`);
+    if(!stored || atob(stored) !== pinInput) { setPinError("Contraseña incorrecta ❌"); return; }
+    await loadUserData(pendingUser);
+    setUser(pendingUser);
+    setPinInput(""); setPinError("");
+    if(!planStart) setScreen("dateSetup");
+    else setScreen("app");
+  }
+
+  async function toggleDone(w,d) {
+    const k=`${w}-${d}`;
+    const newDone={...done};
+    newDone[k] ? delete newDone[k] : (newDone[k]={manual:true,ts:Date.now()});
+    setDone(newDone);
+    await Cloud.set(`u:${activeUser}:done`, newDone);
+  }
+
+  async function saveNote(w,d,text) {
+    const k=`${w}-${d}`;
+    const newNotes={...notes};
+    if(text.trim()) newNotes[k]={text:text.trim(),date:new Date().toISOString()};
+    else delete newNotes[k];
+    setNotes(newNotes);
+    await Cloud.set(`u:${activeUser}:notes`, newNotes);
+  }
+
+  // Strava
+  const stravaAuthUrl = uid => `https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=activity:read_all&state=${uid}`;
+
+  async function doExchange(uid,code,secret) {
+    setSyncing(true); setSyncMsg("Conectando con Strava...");
+    try {
+      const r = await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:secret,code,grant_type:"authorization_code"})});
+      const data = await r.json();
+      const sd = {accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:data.expires_at,clientSecret:secret,athlete:data.athlete};
+      LS.set(`strava_${uid}`,sd);
+      uid==="paula"?setPaulaStrava(sd):setDaisyStrava(sd);
+      setSyncMsg("¡Conectado! Cargando actividades...");
+      await doSync(uid, data.access_token);
+    } catch(e) { setSyncMsg("❌ Error — verifica el Client Secret"); }
+    setSyncing(false); setSecretModal(null);
+  }
+
+  async function doSync(uid, tokenOverride) {
+    setSyncing(true); setSyncMsg("Sincronizando...");
+    try {
+      const sd = LS.get(`strava_${uid}`);
+      let token = tokenOverride || sd?.accessToken;
+      if(sd && Date.now()/1000 > sd.expiresAt-60) {
+        const r = await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:sd.clientSecret,refresh_token:sd.refreshToken,grant_type:"refresh_token"})});
+        const data = await r.json(); token = data.access_token;
+        const updated = {...sd,accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:data.expires_at};
+        LS.set(`strava_${uid}`,updated);
+        uid==="paula"?setPaulaStrava(updated):setDaisyStrava(updated);
+      }
+      let all=[],page=1,batch;
+      do { const r=await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`,{headers:{Authorization:`Bearer ${token}`}}); batch=await r.json(); all=[...all,...batch]; page++; } while(batch.length===100);
+      const runs = all.filter(a=>a.type==="Run"||a.type==="TrailRun");
+      uid==="paula"?setPaulaActs(runs):setDaisyActs(runs);
+      if(planStart) autoMark(uid,runs,planStart);
+      setSyncMsg(`✓ ${runs.length} carreras sincronizadas`);
+      setTimeout(()=>setSyncMsg(""),3000);
+    } catch(e) { setSyncMsg("❌ Error al sincronizar"); }
+    setSyncing(false);
+  }
+
+  function autoMark(uid,activities,startDate) {
+    const start = new Date(startDate);
+    const prev = uid==="paula"?{...paulaDone}:{...daisyDone};
+    const newDone = {...prev};
+    activities.forEach(act=>{
+      const ad=new Date(act.start_date_local);
+      const diff=Math.floor((ad-start)/86400000);
+      if(diff<0)return;
+      const w=Math.floor(diff/7)+1; const d=(ad.getDay()+6)%7+1;
+      if(w>=1&&w<=21&&PLAN[w]?.[d])
+        newDone[`${w}-${d}`]={auto:true,stravaId:act.id,name:act.name,distance:act.distance,time:act.moving_time,pace:act.average_speed,hr:act.average_heartrate};
+    });
+    if(uid==="paula")setPaulaDone(newDone); else setDaisyDone(newDone);
+    Cloud.set(`u:${uid}:done`, newDone);
+  }
+
+  // Stats
+  const totalKmDone = uid => Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+doneKmWeek(w,uid==="paula"?paulaDone:daisyDone),0);
+  const adherence = uid => { const d=uid==="paula"?paulaDone:daisyDone; const td=Object.values(d).filter(Boolean).length; const ts=Array.from({length:21},(_,i)=>i+1).reduce((s,w)=>s+Object.keys(PLAN[w]||{}).length,0); return ts>0?Math.round((td/ts)*100):0; };
+  const avgPaceUid = uid => { const a=uid==="paula"?paulaActs:daisyActs; if(!a.length)return null; return a.reduce((s,x)=>s+x.average_speed,0)/a.length; };
+  const weekKmDoneUid = uid => doneKmWeek(week,uid==="paula"?paulaDone:daisyDone);
+
+  // ══ SCREENS ════════════════════════════════════════════════════════════════
+
+  // SELECT
+  if(screen==="select") return (
+    <Wrap center>
+      <div style={{textAlign:"center",marginBottom:32}}>
+        <div style={{fontFamily:"'Fraunces',serif",fontSize:36,fontWeight:700,color:C.text,lineHeight:1.1}}>Media Maratón</div>
+        <div style={{fontSize:13,color:C.text3,marginTop:6,letterSpacing:1,textTransform:"uppercase"}}>Paula & Daisy · 21 semanas · 1:45 meta</div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:360}}>
+        {["paula","daisy"].map(uid=>{
+          const p = getUserProfile(uid);
+          const km = totalKmDone(uid); const adh = adherence(uid);
+          const isNew = !hasSetup(uid);
+          return (
+            <button key={uid} onClick={()=>handleSelectUser(uid)}
+              style={{background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:16,padding:"18px 20px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:14,boxShadow:"0 2px 8px rgba(0,0,0,.06)",transition:"all .2s"}}>
+              <div style={{width:48,height:48,borderRadius:14,background:C.cream,border:`2px solid ${p.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{p.emoji}</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:17,color:C.text}}>{p.name}</div>
+                <div style={{fontSize:11,color:C.text3,marginTop:3}}>
+                  {isNew ? "Primera vez — crear cuenta" : `${km.toFixed(1)}km · ${adh}% adherencia`}
+                </div>
+              </div>
+              <div style={{fontSize:16,color:p.color,fontWeight:600}}>{isNew?"→ Crear":"→"}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Mini versus */}
+      {(totalKmDone("paula")>0||totalKmDone("daisy")>0) && (
+        <div style={{marginTop:24,width:"100%",maxWidth:360,background:C.surface,borderRadius:14,padding:"14px 16px",border:`1px solid ${C.border}`}}>
+          <div style={{fontSize:10,color:C.text3,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>⚔️ Versus — semana {week}</div>
+          {["paula","daisy"].map(uid=>{
+            const p=getUserProfile(uid); const km=weekKmDoneUid(uid); const max=Math.max(weekKmDoneUid("paula"),weekKmDoneUid("daisy"),planKmWeek(week),.1);
+            return(<div key={uid} style={{marginBottom:8}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:C.text2}}>{p.emoji} {p.name}</span><span style={{fontSize:11,color:p.color,fontWeight:600}}>{km.toFixed(1)}km</span></div>
+              <div style={{height:5,background:C.cream,borderRadius:3}}><div style={{height:"100%",borderRadius:3,background:p.color,width:`${(km/max)*100}%`,transition:"width .6s"}}/></div>
+            </div>);
+          })}
+        </div>
+      )}
+    </Wrap>
+  );
+
+  // SETUP (crear contraseña)
+  if(screen==="setup") {
+    const p = getUserProfile(setupUser||"paula");
+    return (
+      <Wrap center>
+        <Card style={{maxWidth:380,width:"100%"}}>
+          <button onClick={()=>setScreen("select")} style={btnBack}>← Volver</button>
+          <div style={{textAlign:"center",marginBottom:24}}>
+            <div style={{fontSize:40,marginBottom:8}}>{p.emoji}</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:20,color:C.text}}>Hola, {p.name}!</div>
+            <div style={{fontSize:12,color:C.text3,marginTop:4}}>Crea tu contraseña para sincronizar tu progreso en todos tus dispositivos.</div>
+          </div>
+          <Input type="password" value={setupPassword} onChange={e=>{setSetupPassword(e.target.value);setSetupError("");}} placeholder="Crea tu contraseña (min. 4 caracteres)" onKeyDown={e=>e.key==="Enter"&&setupConfirm&&handleSetup()}/>
+          <Input type="password" value={setupConfirm} onChange={e=>{setSetupConfirm(e.target.value);setSetupError("");}} placeholder="Confirma tu contraseña" style={{marginTop:8}} onKeyDown={e=>e.key==="Enter"&&handleSetup()}/>
+          {setupError && <div style={{color:C.terracotta,fontSize:12,marginTop:6,textAlign:"center"}}>{setupError}</div>}
+          <Btn onClick={handleSetup} color={p.color} style={{marginTop:14}}>Crear cuenta y entrar →</Btn>
+          <div style={{fontSize:10,color:C.text3,textAlign:"center",marginTop:12}}>Tu contraseña solo se guarda en este dispositivo y sincroniza tus datos entre iPhone, iPad, etc.</div>
+        </Card>
+      </Wrap>
+    );
+  }
+
+  // LOGIN
+  if(screen==="login") {
+    const p = getUserProfile(pendingUser||"paula");
+    return (
+      <Wrap center>
+        <Card style={{maxWidth:380,width:"100%"}}>
+          <button onClick={()=>setScreen("select")} style={btnBack}>← Volver</button>
+          <div style={{textAlign:"center",marginBottom:24}}>
+            <div style={{fontSize:40,marginBottom:8}}>{p.emoji}</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:20,color:C.text}}>{p.name}</div>
+            <div style={{fontSize:12,color:C.text3,marginTop:4}}>Ingresa tu contraseña para cargar tu progreso</div>
+          </div>
+          <Input type="password" value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinError("");}} placeholder="Tu contraseña" onKeyDown={e=>e.key==="Enter"&&handleLogin()} autoFocus/>
+          {pinError && <div style={{color:C.terracotta,fontSize:12,marginTop:6,textAlign:"center"}}>{pinError}</div>}
+          <Btn onClick={handleLogin} color={p.color} style={{marginTop:12}} disabled={loading}>
+            {loading ? "Cargando datos..." : "Entrar →"}
+          </Btn>
+        </Card>
+      </Wrap>
+    );
+  }
+
+  // DATE SETUP
+  if(screen==="dateSetup") return (
+    <Wrap center>
+      <Card style={{maxWidth:380,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:36,marginBottom:10}}>📅</div>
+        <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:20,marginBottom:6}}>¿Cuándo empieza el plan?</div>
+        <div style={{fontSize:12,color:C.text3,marginBottom:20}}>Compartido para Paula y Daisy — el mismo calendario para las dos.</div>
+        <Input type="date" id="start-date" defaultValue={new Date().toISOString().split("T")[0]}/>
+        <Btn onClick={async()=>{
+          const v=document.getElementById("start-date").value; if(!v)return;
+          LS.set("plan_start",v); setPlanStart(v);
+          await Cloud.set(`u:${activeUser}:meta`,{planStart:v});
+          setScreen("app");
+        }} color={profile.color} style={{marginTop:12}}>Comenzar →</Btn>
+      </Card>
+    </Wrap>
+  );
+
+  // ══ MAIN APP ═════════════════════════════════════════════════════════════════
+  const phase    = getPhase(week);
+  const weekDays = PLAN[week]||{};
+  const wKmDone  = doneKmWeek(week,done);
+  const wKmPlan  = planKmWeek(week);
+  const myKm     = totalKmDone(activeUser);
+
+  return (
+    <div style={{minHeight:"100vh",background:C.bg}}>
+
+      {/* Secret modal */}
+      {secretModal && (
+        <Overlay onClick={()=>setSecretModal(null)}>
+          <Card style={{maxWidth:360,width:"100%"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:28,textAlign:"center",marginBottom:10}}>{getUserProfile(secretModal.userId).emoji}</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:17,textAlign:"center",marginBottom:6}}>Client Secret de Strava</div>
+            <div style={{fontSize:11,color:C.text3,textAlign:"center",marginBottom:14}}>Solo se guarda en este dispositivo.</div>
+            <Input type="password" value={secretVal} onChange={e=>setSecretVal(e.target.value)} placeholder="Pega tu Client Secret"/>
+            <Btn onClick={()=>{if(!secretVal.trim())return; doExchange(secretModal.userId,secretModal.code,secretVal.trim()); setSecretVal("");}} color={C.terracotta} style={{marginTop:10}}>Conectar</Btn>
+            {syncMsg&&<div style={{marginTop:8,fontSize:11,color:C.sage,textAlign:"center"}}>{syncMsg}</div>}
+          </Card>
+        </Overlay>
+      )}
+
+      {/* Note modal */}
+      {noteModal && (
+        <Overlay onClick={()=>setNoteModal(null)}>
+          <div style={{width:"100%",maxWidth:460,background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:"hidden",margin:"0 12px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{padding:"14px 16px 10px",borderBottom:`1px solid ${C.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontSize:9,color:C.text3,textTransform:"uppercase",letterSpacing:1}}>Nota del entrenamiento</div>
+                <div style={{fontSize:13,fontWeight:600,color:C.text,marginTop:2}}>{noteModal.label} · S{noteModal.week} {DAY_NAMES[noteModal.day-1]}</div>
+              </div>
+              <button onClick={()=>setNoteModal(null)} style={{background:C.cream,border:`1px solid ${C.border}`,color:C.text2,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:13}}>✕</button>
+            </div>
+            <div style={{padding:16}}>
+              <textarea value={noteText} onChange={e=>setNoteText(e.target.value)}
+                placeholder="¿Cómo te sentiste? ¿Algún dolor? ¿El clima? ¿Tu energía?..."
+                style={{width:"100%",height:110,background:C.cream,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",color:C.text,fontSize:13,resize:"none",outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
+              <div style={{display:"flex",gap:8,marginTop:10}}>
+                {notes[`${noteModal.week}-${noteModal.day}`]&&<button onClick={async()=>{await saveNote(noteModal.week,noteModal.day,"");setNoteModal(null);}}
+                  style={{padding:"9px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.text3,fontSize:11,cursor:"pointer"}}>Borrar</button>}
+                <button onClick={async()=>{await saveNote(noteModal.week,noteModal.day,noteText);setNoteModal(null);}}
+                  style={{flex:1,padding:"11px",borderRadius:8,border:"none",background:profile.color,color:"#fff",fontWeight:600,fontSize:12,cursor:"pointer"}}>Guardar nota ✓</button>
+              </div>
+            </div>
+          </div>
+        </Overlay>
+      )}
+
+      {/* HEADER */}
+      <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"11px 16px",position:"sticky",top:0,zIndex:100}}>
+        <div style={{maxWidth:860,margin:"0 auto"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <button onClick={()=>{setScreen("select");setUser(null);}} style={btnBack}>← Salir</button>
+            <div style={{display:"flex",alignItems:"center",gap:7,background:C.cream,border:`1.5px solid ${profile.color}`,borderRadius:10,padding:"5px 12px"}}>
+              <span style={{fontSize:14}}>{profile.emoji}</span>
+              <span style={{fontWeight:600,fontSize:13,color:profile.color,fontFamily:"'Fraunces',serif"}}>{profile.name}</span>
+            </div>
+            <div style={{flex:1}}/>
+            {stravaData?.athlete ? (
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <img src={stravaData.athlete.profile_medium} alt="" style={{width:26,height:26,borderRadius:"50%",border:`2px solid ${profile.color}`}}/>
+                <button onClick={()=>doSync(activeUser)} disabled={syncing}
+                  style={{background:"#fc4c0215",border:"1px solid #fc4c0244",color:"#fc4c02",borderRadius:7,padding:"3px 10px",fontSize:10,cursor:"pointer",fontWeight:600}}>
+                  {syncing?"⟳":"⚡ Sync"}
+                </button>
+              </div>
+            ) : (
+              <button onClick={()=>window.location.href=stravaAuthUrl(activeUser)}
+                style={{background:"#fc4c02",border:"none",color:"#fff",borderRadius:8,padding:"6px 12px",fontSize:10,fontWeight:700,cursor:"pointer"}}>⚡ Strava</button>
+            )}
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:15,color:profile.color}}>{myKm.toFixed(1)}<span style={{fontSize:9,color:C.text3}}>km</span></div>
+              <div style={{fontSize:8,color:C.text3}}>/{totalPlanKm.toFixed(0)}km</div>
+            </div>
+          </div>
+          {syncMsg&&<div style={{fontSize:10,color:C.sage,textAlign:"center",marginTop:5}}>{syncMsg}</div>}
+          {/* Progress */}
+          <div style={{height:3,background:C.cream,borderRadius:2,marginTop:8}}>
+            <div style={{height:"100%",borderRadius:2,background:profile.color,width:`${Math.min(100,(myKm/totalPlanKm)*100)}%`,transition:"width .7s"}}/>
+          </div>
+          {/* Tabs */}
+          <div style={{display:"flex",gap:4,marginTop:10}}>
+            {[["plan","📅 Plan"],["versus","⚔️ Versus"],["strava","⚡ Strava"]].map(([t,l])=>(
+              <button key={t} onClick={()=>setTab(t)}
+                style={{padding:"5px 14px",borderRadius:7,fontSize:11,fontWeight:500,border:tab===t?`1.5px solid ${profile.color}`:`1px solid ${C.border}`,background:tab===t?profile.color:"transparent",color:tab===t?"#fff":C.text3,cursor:"pointer",transition:"all .15s"}}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:860,margin:"0 auto",padding:"18px 14px"}}>
+
+        {/* ══ PLAN ══ */}
+        {tab==="plan" && <>
+          {/* Phases */}
+          <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:2}}>
+            {PHASES.map(p=>(
+              <div key={p.id} onClick={()=>setWeek(p.weeks[0])}
+                style={{flex:1,minWidth:64,padding:"7px 9px",borderRadius:9,background:C.surface,border:`1.5px solid ${p.weeks.includes(week)?p.color:C.border}`,cursor:"pointer",transition:"border-color .2s"}}>
+                <div style={{fontSize:9,fontWeight:600,color:p.color,textTransform:"uppercase",letterSpacing:.5}}>{p.emoji} {p.name}</div>
+                <div style={{fontSize:8,color:C.text3,marginTop:1}}>S{p.weeks[0]}–{p.weeks[p.weeks.length-1]}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Week pills */}
+          <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:14}}>
+            {Array.from({length:21},(_,i)=>i+1).map(w=>{
+              const ph=getPhase(w); const pct=planKmWeek(w)>0?(doneKmWeek(w,done)/planKmWeek(w)):0; const isActive=w===week;
+              return(
+                <button key={w} onClick={()=>setWeek(w)}
+                  style={{width:30,height:30,borderRadius:7,fontSize:10,fontWeight:600,border:`1.5px solid ${isActive?ph.color:pct>=.9?C.sage:C.border}`,background:isActive?ph.color:pct>=.9?"#eaf4ea":C.surface,color:isActive?"#fff":pct>=.9?C.sage:C.text3,cursor:"pointer",transition:"all .13s",fontFamily:"'Fraunces',serif"}}>
+                  {w===21?"🏁":w}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Week header */}
+          <div style={{background:C.surface,border:`1.5px solid ${phase.color}44`,borderRadius:12,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>
+            <div style={{fontSize:22}}>{phase.emoji}</div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
+                <span style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:14,color:C.text}}>Semana {week}</span>
+                <span style={{fontSize:9,background:`${phase.color}18`,color:phase.color,padding:"2px 7px",borderRadius:4,fontWeight:600,textTransform:"uppercase"}}>{phase.name}</span>
+                {week%4===0&&week<17&&<span style={{fontSize:9,background:"#eaf4ea",color:C.sage,padding:"2px 7px",borderRadius:4,fontWeight:600}}>↓ Descarga</span>}
+              </div>
+              {planStart&&<div style={{fontSize:10,color:C.text3,marginTop:2}}>
+                {new Date(new Date(planStart).getTime()+(week-1)*7*86400000).toLocaleDateString("es",{day:"numeric",month:"short"})} – {new Date(new Date(planStart).getTime()+((week-1)*7+6)*86400000).toLocaleDateString("es",{day:"numeric",month:"short"})}
+              </div>}
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:14,color:phase.color}}>{wKmDone.toFixed(1)}<span style={{fontSize:9,color:C.text3}}>/{wKmPlan.toFixed(1)}km</span></div>
+              <div style={{height:3,background:C.cream,borderRadius:2,marginTop:4,width:60}}><div style={{height:"100%",borderRadius:2,background:phase.color,width:`${wKmPlan>0?Math.min(100,(wKmDone/wKmPlan)*100):0}%`}}/></div>
+            </div>
+          </div>
+
+          {/* Day grid */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:5}}>
+            {[1,2,3,4,5,6,7].map(d=>{
+              const data=weekDays[d]; const k=`${week}-${d}`; const isDone=!!done[k]; const isAuto=done[k]?.auto; const hasNote=!!notes[k];
+              if(!data) return <div key={d} style={{background:C.cream,borderRadius:9,minHeight:96,display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:8,color:C.border2,textTransform:"uppercase"}}>{DAY_NAMES[d-1]}</span></div>;
+              return(
+                <div key={d} style={{background:isDone?`${data.color}0f`:C.surface,border:`1.5px solid ${isDone?data.color:C.border}`,borderRadius:9,padding:"8px 6px",minHeight:96,display:"flex",flexDirection:"column",gap:2,position:"relative",cursor:"pointer",transition:"all .15s",boxShadow:isDone?"none":"0 1px 3px rgba(0,0,0,.05)"}}
+                  onClick={()=>setModal({week,day:d,data,k,isDone,stravaInfo:isDone&&done[k]?.auto?done[k]:null})}>
+                  {/* X button to unmark */}
+                  {isDone && (
+                    <button onClick={e=>{e.stopPropagation();toggleDone(week,d);}}
+                      style={{position:"absolute",top:3,right:3,width:16,height:16,borderRadius:"50%",background:data.color,border:"none",color:"#fff",fontSize:8,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,fontWeight:700,padding:0}}>✕</button>
+                  )}
+                  {hasNote && <div style={{position:"absolute",top:3,left:3,fontSize:8}}>📝</div>}
+                  <span style={{fontSize:8,color:C.text3,textTransform:"uppercase",letterSpacing:.4,marginTop:isDone?6:hasNote?6:0}}>{DAY_NAMES[d-1]}</span>
+                  {/* NRC tag */}
+                  <span style={{fontSize:7,color:data.color,fontWeight:700,letterSpacing:.5}}>{data.tag}</span>
+                  <span style={{fontSize:14}}>{data.icon}</span>
+                  <span style={{fontSize:9,fontWeight:500,color:isDone?data.color:C.text2,lineHeight:1.3}}>{data.label}</span>
+                  {data.km>0&&<span style={{fontSize:8,color:isDone?data.color:C.text3,marginTop:"auto",fontFamily:"'Fraunces',serif",fontWeight:600}}>{isAuto?fmtDist(done[k].distance):data.km+"km"}</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:14}}>
+            <button disabled={week===1} onClick={()=>setWeek(w=>Math.max(1,w-1))} style={{...btnSecondary,opacity:week===1?.4:1}}>← Anterior</button>
+            <button disabled={week===21} onClick={()=>setWeek(w=>Math.min(21,w+1))} style={{...btnSecondary,opacity:week===21?.4:1}}>Siguiente →</button>
+          </div>
+        </>}
+
+        {/* ══ VERSUS ══ */}
+        {tab==="versus" && (
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            {/* Hero */}
+            <div style={{background:C.surface,borderRadius:16,padding:"20px",border:`1px solid ${C.border}`,boxShadow:"0 2px 8px rgba(0,0,0,.05)"}}>
+              <div style={{textAlign:"center",marginBottom:16}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:18,fontWeight:700,color:C.text}}>Batalla · Meta 1:45</div>
+                <div style={{fontSize:11,color:C.text3,marginTop:2}}>4:58/km · 21.1km</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center"}}>
+                {["paula","daisy"].map(uid=>{
+                  const p=getUserProfile(uid); const km=totalKmDone(uid); const adh=adherence(uid);
+                  const wins=[totalKmDone(uid)>totalKmDone(uid==="paula"?"daisy":"paula"),adherence(uid)>adherence(uid==="paula"?"daisy":"paula"),weekKmDoneUid(uid)>weekKmDoneUid(uid==="paula"?"daisy":"paula")].filter(Boolean).length;
+                  return(<div key={uid} style={{flex:1,textAlign:"center",padding:"0 8px"}}>
+                    <div style={{fontSize:28,marginBottom:4}}>{p.emoji}</div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:15,color:p.color}}>{p.name}</div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,color:C.text,marginTop:6}}>{km.toFixed(0)}<span style={{fontSize:11,color:C.text3}}>km</span></div>
+                    <div style={{fontSize:10,color:C.text3,marginTop:1}}>{adh}% adherencia</div>
+                    <div style={{marginTop:6,fontSize:10,color:wins>=2?p.color:C.text3,fontWeight:wins>=2?700:400}}>{wins>=2?"👑 Ganando":"· "+wins+"/3"}</div>
+                  </div>);
+                })}
+              </div>
+            </div>
+
+            <StatRow label="Km totales" vals={{paula:totalKmDone("paula"),daisy:totalKmDone("daisy")}} fmt={v=>`${v.toFixed(1)}km`} higher profiles={[getUserProfile("paula"),getUserProfile("daisy")]}/>
+            <StatRow label="Adherencia al plan" vals={{paula:adherence("paula"),daisy:adherence("daisy")}} fmt={v=>`${v}%`} higher profiles={[getUserProfile("paula"),getUserProfile("daisy")]}/>
+            <StatRow label={`Km semana ${week}`} vals={{paula:weekKmDoneUid("paula"),daisy:weekKmDoneUid("daisy")}} fmt={v=>`${v.toFixed(1)}km`} higher profiles={[getUserProfile("paula"),getUserProfile("daisy")]}/>
+            <StatRow label="Ritmo Strava" vals={{paula:avgPaceUid("paula")||0,daisy:avgPaceUid("daisy")||0}} fmt={(v,uid)=>avgPaceUid(uid)?fmtPace(avgPaceUid(uid))+"/km":"--"} higher={false} profiles={[getUserProfile("paula"),getUserProfile("daisy")]}/>
+
+            {/* Chart */}
+            <div style={{background:C.surface,borderRadius:12,padding:"14px 16px",border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:10,color:C.text3,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>Km por semana</div>
+              <div style={{display:"flex",alignItems:"flex-end",gap:2,height:64}}>
+                {Array.from({length:21},(_,i)=>i+1).map(w=>{
+                  const pKm=doneKmWeek(w,paulaDone); const dKm=doneKmWeek(w,daisyDone);
+                  const maxKm=Math.max(...Array.from({length:21},(_,i)=>Math.max(doneKmWeek(i+1,paulaDone),doneKmWeek(i+1,daisyDone),planKmWeek(i+1))),1);
+                  const pp=getUserProfile("paula"); const dp=getUserProfile("daisy");
+                  return(<div key={w} style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",gap:1,height:60,cursor:"pointer"}} onClick={()=>{setWeek(w);setTab("plan");}}>
+                    <div style={{width:"100%",height:`${(pKm/maxKm)*100}%`,background:pp.color,borderRadius:"2px 2px 0 0",opacity:.85,minHeight:pKm>0?2:0}}/>
+                    <div style={{width:"100%",height:`${(dKm/maxKm)*100}%`,background:dp.color,borderRadius:"2px 2px 0 0",opacity:.85,minHeight:dKm>0?2:0}}/>
+                    <div style={{textAlign:"center",fontSize:5,color:w===week?C.text:C.border2,fontFamily:"'Fraunces',serif",marginTop:2}}>{w}</div>
+                  </div>);
+                })}
+              </div>
+              <div style={{display:"flex",gap:10,marginTop:6}}>
+                {["paula","daisy"].map(uid=>{const p=getUserProfile(uid);return(<div key={uid} style={{display:"flex",alignItems:"center",gap:3}}><div style={{width:7,height:7,borderRadius:2,background:p.color}}/><span style={{fontSize:9,color:C.text3}}>{p.name}</span></div>);})}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ STRAVA ══ */}
+        {tab==="strava" && (
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {!stravaData?.athlete ? (
+              <div style={{textAlign:"center",padding:"32px 20px",background:C.surface,borderRadius:14,border:`1px solid ${C.border}`}}>
+                <div style={{fontSize:40,marginBottom:10}}>{profile.emoji}</div>
+                <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:17,marginBottom:6}}>Strava de {profile.name}</div>
+                <div style={{fontSize:12,color:C.text3,marginBottom:18}}>Sincroniza tus carreras automáticamente.</div>
+                <button onClick={()=>window.location.href=stravaAuthUrl(activeUser)}
+                  style={{background:"#fc4c02",border:"none",color:"#fff",borderRadius:10,padding:"11px 22px",fontWeight:700,fontSize:12,cursor:"pointer"}}>⚡ Conectar Strava de {profile.name}</button>
+              </div>
+            ) : (
+              <>
+                <div style={{background:C.surface,borderRadius:12,padding:"14px",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",gap:12}}>
+                  <img src={stravaData.athlete.profile} alt="" style={{width:46,height:46,borderRadius:"50%",border:`3px solid ${profile.color}`}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:15,color:C.text}}>{stravaData.athlete.firstname} {stravaData.athlete.lastname}</div>
+                    <div style={{fontSize:10,color:C.text3,marginTop:1}}>{stravaData.athlete.city}</div>
+                    <div style={{fontSize:9,color:"#fc4c02",marginTop:2}}>⚡ Conectado</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:18,color:profile.color}}>{(acts.reduce((s,a)=>s+a.distance,0)/1000).toFixed(0)}</div>
+                    <div style={{fontSize:9,color:C.text3}}>km totales</div>
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                  {[{l:"Carreras",v:acts.length,i:"🏃"},{l:"Km",v:`${(acts.reduce((s,a)=>s+a.distance,0)/1000).toFixed(0)}km`,i:"📏"},{l:"Ritmo",v:avgPaceUid(activeUser)?fmtPace(avgPaceUid(activeUser))+"/km":"--",i:"⚡"}].map(c=>(
+                    <div key={c.l} style={{background:C.surface,borderRadius:10,padding:"10px",border:`1px solid ${C.border}`,textAlign:"center"}}>
+                      <div style={{fontSize:18}}>{c.i}</div>
+                      <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:14,color:profile.color,marginTop:3}}>{c.v}</div>
+                      <div style={{fontSize:9,color:C.text3,marginTop:1}}>{c.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{background:C.surface,borderRadius:12,padding:"12px 14px",border:`1px solid ${C.border}`}}>
+                  <div style={{fontSize:9,fontWeight:600,color:C.text3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>Actividades recientes</div>
+                  {acts.slice(0,7).map(a=>(
+                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:9,padding:"7px 8px",borderRadius:8,background:C.cream,border:`1px solid ${C.border}`,marginBottom:5}}>
+                      <span style={{fontSize:13}}>🏃</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:11,fontWeight:500,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{a.name}</div>
+                        <div style={{fontSize:9,color:C.text3,marginTop:1}}>{new Date(a.start_date_local).toLocaleDateString("es",{day:"numeric",month:"short"})}</div>
+                      </div>
+                      <div style={{textAlign:"right",flexShrink:0}}>
+                        <div style={{fontSize:11,fontWeight:600,color:"#fc4c02",fontFamily:"'Fraunces',serif"}}>{fmtDist(a.distance)}</div>
+                        <div style={{fontSize:9,color:C.text3}}>{fmtPace(a.average_speed)}/km</div>
+                      </div>
+                      {a.average_heartrate&&<div style={{flexShrink:0}}><div style={{fontSize:10,color:C.terracotta}}>♥{Math.round(a.average_heartrate)}</div></div>}
+                    </div>
+                  ))}
+                  {acts.length===0&&<div style={{textAlign:"center",color:C.text3,fontSize:11,padding:"12px"}}>Sin actividades aún 🏃</div>}
+                </div>
+                <button onClick={()=>doSync(activeUser)} disabled={syncing}
+                  style={{padding:"11px",borderRadius:10,border:"none",background:"#fc4c02",color:"#fff",fontWeight:600,fontSize:12,cursor:"pointer"}}>
+                  {syncing?"Sincronizando...":"🔄 Sincronizar actividades"}
+                </button>
+                <button onClick={()=>{LS.set(`strava_${activeUser}`,null);setStravaData(null);}}
+                  style={{padding:"9px",borderRadius:8,border:`1px solid ${C.border}`,background:"transparent",color:C.text3,fontSize:11,cursor:"pointer"}}>
+                  Desconectar Strava de {profile.name}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* DAY MODAL */}
+      {modal && (
+        <Overlay onClick={()=>setModal(null)}>
+          <div style={{width:"100%",maxWidth:460,background:C.surface,borderRadius:16,border:`1.5px solid ${modal.data.color}55`,overflow:"hidden",margin:"0 10px 16px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{background:`${modal.data.color}0c`,padding:"14px 16px 10px",borderBottom:`1px solid ${C.border}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div>
+                  <div style={{fontSize:8,color:C.text3,textTransform:"uppercase",letterSpacing:1}}>S{modal.week} · {DAY_NAMES[modal.day-1]} · {profile.emoji} {profile.name}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
+                    <span style={{fontSize:22}}>{modal.data.icon}</span>
+                    <div>
+                      <div style={{fontSize:8,color:modal.data.color,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>{modal.data.tag}</div>
+                      <div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:15,color:C.text}}>{modal.data.label}</div>
+                    </div>
+                  </div>
+                  {modal.data.km>0&&<div style={{fontSize:12,color:modal.data.color,marginTop:2,fontFamily:"'Fraunces',serif",fontWeight:600}}>{modal.data.km}km planificados</div>}
+                </div>
+                <button onClick={()=>setModal(null)} style={{background:C.cream,border:`1px solid ${C.border}`,color:C.text2,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:13}}>✕</button>
+              </div>
+            </div>
+
+            {/* Strava data */}
+            {modal.stravaInfo && (
+              <div style={{padding:"8px 16px"}}>
+                <div style={{background:"#fc4c0210",border:"1px solid #fc4c0230",borderRadius:9,padding:"8px 12px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                  {[["distancia",fmtDist(modal.stravaInfo.distance),"#fc4c02"],["ritmo",fmtPace(modal.stravaInfo.pace)+"/km","#fc4c02"],["FC",modal.stravaInfo.hr?`♥${Math.round(modal.stravaInfo.hr)}`:"--",C.terracotta]].map(([l,v,c])=>(
+                    <div key={l} style={{textAlign:"center"}}><div style={{fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:12,color:c}}>{v}</div><div style={{fontSize:8,color:C.text3,marginTop:1}}>{l}</div></div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Note preview */}
+            {notes[modal.k] && (
+              <div style={{margin:"0 16px 4px",background:C.cream,borderRadius:8,padding:"8px 10px",border:`1px solid ${C.border}`}}>
+                <div style={{fontSize:8,color:C.text3,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>📝 Tu nota</div>
+                <div style={{fontSize:11,color:C.text2,lineHeight:1.5}}>{notes[modal.k].text}</div>
+              </div>
+            )}
+
+            <div style={{padding:"8px 16px 16px"}}>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:4}}>
+                {modal.data.details?.map((d,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                    <div style={{width:4,height:4,borderRadius:"50%",background:modal.data.color,marginTop:5,flexShrink:0}}/>
+                    <span style={{fontSize:12,color:C.text2,lineHeight:1.5}}>{d}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:14}}>
+                <button onClick={()=>{setModal(null);setNoteText(notes[modal.k]?.text||"");setNoteModal({week:modal.week,day:modal.day,label:modal.data.label});}}
+                  style={{flex:1,padding:"11px",borderRadius:9,border:`1.5px solid ${profile.color}44`,background:`${profile.color}0a`,color:profile.color,fontWeight:600,fontSize:11,cursor:"pointer"}}>
+                  {notes[modal.k]?"✏️ Editar nota":"📝 Añadir nota"}
+                </button>
+                <button onClick={()=>{toggleDone(modal.week,modal.day);setModal(null);}}
+                  style={{flex:2,padding:"11px",borderRadius:9,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:modal.isDone?C.cream:modal.data.color,color:modal.isDone?C.text3:"#fff",border:modal.isDone?`1px solid ${C.border}`:"none"}}>
+                  {modal.isDone?"✕ Marcar pendiente":"✓ Completado"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Overlay>
+      )}
+    </div>
+  );
+}
+
+// ── REUSABLE COMPONENTS ───────────────────────────────────────────────────────
+function Wrap({children,center}) {
+  return <div style={{minHeight:"100vh",background:C.bg,display:center?"flex":"block",flexDirection:"column",alignItems:center?"center":"stretch",justifyContent:center?"center":"flex-start",padding:center?24:0}}>{children}</div>;
+}
+function Card({children,style,onClick}) {
+  return <div style={{background:C.surface,borderRadius:16,padding:24,border:`1px solid ${C.border}`,boxShadow:"0 2px 12px rgba(0,0,0,.07)",...style}} onClick={onClick}>{children}</div>;
+}
+function Input({type="text",value,onChange,placeholder,style,onKeyDown,id,defaultValue,autoFocus}) {
+  return <input type={type} value={value} onChange={onChange} placeholder={placeholder} onKeyDown={onKeyDown} id={id} defaultValue={defaultValue} autoFocus={autoFocus}
+    style={{width:"100%",padding:"12px 14px",borderRadius:10,border:`1.5px solid ${C.border}`,background:C.cream,color:C.text,fontSize:14,outline:"none",fontFamily:"'DM Sans',sans-serif",...style}}/>;
+}
+function Btn({children,onClick,color,style,disabled}) {
+  return <button onClick={onClick} disabled={disabled}
+    style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:disabled?C.border:color,color:"#fff",fontWeight:600,fontSize:14,cursor:disabled?"not-allowed":"pointer",opacity:disabled?.7:1,fontFamily:"'DM Sans',sans-serif",...style}}>
+    {children}
+  </button>;
+}
+function Overlay({children,onClick}) {
+  return <div style={{position:"fixed",inset:0,background:"rgba(44,36,22,.4)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,padding:"0 0 0",backdropFilter:"blur(2px)"}} onClick={onClick}>{children}</div>;
+}
+function StatRow({label,vals,fmt,higher,profiles}) {
+  const [pp,dp] = profiles;
+  const pv=vals.paula||0; const dv=vals.daisy||0; const max=Math.max(pv,dv)||1;
+  const paulaWins = higher?pv>=dv:(pv>0&&dv>0&&pv<=dv);
+  return(
+    <div style={{background:C.surface,borderRadius:11,padding:"12px 14px",border:`1px solid ${C.border}`}}>
+      <div style={{fontSize:10,color:C.text3,textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>{label}</div>
+      {[["paula",pv,paulaWins,pp],["daisy",dv,!paulaWins,dp]].map(([uid,v,isW,p])=>(
+        <div key={uid} style={{marginBottom:7}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+            <span style={{fontSize:11,color:isW?p.color:C.text3,fontWeight:isW?600:400}}>{p.emoji} {p.name}{isW&&pv!==dv?" 👑":""}</span>
+            <span style={{fontSize:11,color:isW?p.color:C.text3,fontFamily:"'Fraunces',serif",fontWeight:600}}>{fmt(v,uid)}</span>
+          </div>
+          <div style={{height:4,background:C.cream,borderRadius:3}}><div style={{height:"100%",borderRadius:3,background:isW?p.color:`${p.color}55`,width:`${(v/max)*100}%`,transition:"width .6s"}}/></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const btnBack = {background:"transparent",border:`1px solid ${C.border}`,color:C.text3,borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:11,marginBottom:16,display:"block"};
+const btnSecondary = {padding:"8px 16px",borderRadius:8,background:C.surface,border:`1px solid ${C.border}`,color:C.text2,cursor:"pointer",fontSize:11};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
