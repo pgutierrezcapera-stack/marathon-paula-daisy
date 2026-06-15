@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Paula Runs 🔥</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+  const cfg={apiKey:"AIzaSyDqodJK2hbL8216k04oBwUZBy6BF4aH6QU",authDomain:"media-maraton-dyp.firebaseapp.com",projectId:"media-maraton-dyp",storageBucket:"media-maraton-dyp.firebasestorage.app",messagingSenderId:"1081459211776",appId:"1:1081459211776:web:41669efa04eedf489f22e5"};
+  const app=initializeApp(cfg); const db=getFirestore(app);
+  window._fbGet=async k=>{try{const s=await getDoc(doc(db,"paulav3",k));return s.exists()?s.data().v:null;}catch{return null;}};
+  window._fbSet=async(k,v)=>{try{await setDoc(doc(db,"paulav3",k),{v});}catch{}};
+  window._fbReady=true; window.dispatchEvent(new Event("fbReady"));
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff;color:#111;font-family:'Inter',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;font-size:15px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px}
+input,textarea,button{font-family:'Inter',sans-serif}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.5}
+
+/* ── COLOR TOKENS ── */
+:root{
+  --orange: #FC4C02;     /* Strava signature */
+  --orange-l: #FFF0EB;   /* Strava light */
+  --green:  #00B37E;     /* Wellhub recovery */
+  --green-l: #E6FBF4;
+  --coral:  #FF6B6B;     /* High intensity */
+  --coral-l: #FFF0F0;
+  --violet: #7C3AED;     /* Long run */
+  --violet-l: #F3EFFF;
+  --amber:  #F59E0B;     /* Gym/strength */
+  --amber-l: #FFFBEB;
+  --gray:   #6B7280;     /* Rest */
+  --gray-l: #F9FAFB;
+  --ink:    #111827;     /* Primary text */
+  --ink2:   #4B5563;     /* Secondary */
+  --ink3:   #9CA3AF;     /* Tertiary */
+  --border: #E5E7EB;
+  --border2:#F3F4F6;
+  --surface:#FFFFFF;
+  --bg:     #F9FAFB;
+}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:16px;transition:box-shadow .15s}
+.card-tap{cursor:pointer;transition:all .15s}
+.card-tap:active{transform:scale(.98)}
+
+/* ── TYPE ── */
+.h1{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--ink)}
+.h2{font-size:17px;font-weight:700;color:var(--ink)}
+.h3{font-size:14px;font-weight:600;color:var(--ink)}
+.body{font-size:13px;color:var(--ink2);line-height:1.6}
+.caption{font-size:11px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--ink3)}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+
+/* ── PROGRESS ── */
+.progress-track{height:6px;background:var(--border2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+
+/* ── BUTTONS ── */
+.btn-primary{background:var(--orange);color:#fff;border:none;border-radius:12px;padding:14px 20px;font-weight:700;font-size:14px;cursor:pointer;width:100%;transition:all .15s}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-primary:active{transform:scale(.98)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);border-radius:10px;padding:10px 16px;font-weight:500;font-size:13px;cursor:pointer;color:var(--ink2);transition:all .15s}
+.btn-ghost:hover{border-color:var(--orange);color:var(--orange)}
+
+/* ── NAV ── */
+.nav-tab{flex:1;padding:8px 4px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s}
+
+/* ── ANIMATIONS ── */
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.slideUp{animation:slideUp .2s ease}
+.fadeIn{animation:fadeIn .18s ease}
+@keyframes sheetIn{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheetIn{animation:sheetIn .25s cubic-bezier(.32,.72,0,1)}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── WEEK GRID ── */
+.day-cell{border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .15s;position:relative;border:1.5px solid var(--border);background:#fff;min-height:70px}
+.day-cell:active{transform:scale(.95)}
+.day-cell.selected{box-shadow:0 0 0 2.5px currentColor}
+.day-cell.done{border-width:2px}
+
+/* TIP BOX */
+.tip-box{border-radius:16px;padding:16px;border-left:4px solid;margin-bottom:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef} = React;
+
+// ── STORAGE ────────────────────────────────────────────────────────────────────
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k)||"null");}catch{return null;}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
+const waitFB=()=>new Promise(r=>{if(window._fbReady)return r();const t=setTimeout(r,4000);window.addEventListener("fbReady",()=>{clearTimeout(t);r();},{once:true});});
+const Cloud={
+  get:async k=>{await waitFB();try{const v=await window._fbGet(k);return v?JSON.parse(v):null;}catch{return null;}},
+  set:async(k,v)=>{await waitFB();try{await window._fbSet(k,JSON.stringify(v));}catch{}}
+};
+
+// ── WORKOUT TYPES ──────────────────────────────────────────────────────────────
+const WK={
+  recovery:{label:"Recovery",color:"var(--green)",  light:"var(--green-l)", icon:"🫁"},
+  speed:   {label:"Speed",   color:"var(--orange)", light:"var(--orange-l)",icon:"⚡"},
+  long:    {label:"Long Run",color:"var(--violet)", light:"var(--violet-l)",icon:"🏃"},
+  gym:     {label:"Fuerza",  color:"var(--amber)",  light:"var(--amber-l)", icon:"🏋️"},
+  rest:    {label:"Descanso",color:"var(--gray)",   light:"var(--gray-l)",  icon:"😴"},
+  race:    {label:"CARRERA", color:"var(--coral)",  light:"var(--coral-l)", icon:"🏅"},
+};
+
+// ── DAILY TIPS — dynamic by workout type and week intensity ───────────────────
+const TIPS = {
+  recovery: [
+    "Los días de recovery no son días perdidos — son donde el cuerpo consolida las mejoras. Corre lenta, escucha cada paso.",
+    "La zona 2 aburrida de hoy construye la velocidad del mañana. Si puedes mantener una conversación, vas perfecta.",
+    "80% de tu entrenamiento debería sentirse así: cómodo, rítmico, sostenible. Hoy es ese 80%.",
+    "Cadencia 170spm: cuenta tus pasos durante 30s, multiplica por 4. Eso es en lo que piensas hoy.",
+    "El recovery run es una conversación entre tú y tu cuerpo. Hoy escuchas más de lo que exiges.",
+  ],
+  speed: [
+    "Las series de hoy son incómodas por diseño. La incomodidad controlada es exactamente donde mejoras.",
+    "No salgas demasiado rápido en las primeras series. La clave del speedwork es mantener el pace en las últimas — ahí está el trabajo real.",
+    "Cada intervalo que terminas cuando tu cabeza quiere parar es un depósito en tu cuenta de resistencia mental.",
+    "El dolor en el último 1/3 de las series es donde se construye la velocidad. Aguanta, luego recupera bien.",
+    "Respira. Ritmo. Forma. En ese orden durante los intervalos. El pace viene solo si controlas los tres.",
+  ],
+  long: [
+    "El long run del sábado es sagrado. Todo el entrenamiento de la semana trabaja para que puedas completar esta tirada.",
+    "Empieza más lento de lo que crees que debes. Los primeros 3km no determinan el run, los últimos 3km sí.",
+    "A partir del km 10, el entrenamiento mental empieza. La conversación que tienes contigo misma importa tanto como las piernas.",
+    "Cada kilómetro nuevo que corres esta temporada es un kilómetro que no habías corrido antes. Eso es mérito real.",
+    "El long run te enseña a ser paciente. La carrera te premiará por haberlo aprendido.",
+  ],
+  gym: [
+    "La fuerza en el gym no es complementaria al running — es lo que te mantiene sin lesiones cuando el volumen sube.",
+    "Core fuerte = economía de carrera mejor. Cada plank de hoy se convierte en segundos ganados en octubre.",
+    "Activa el glúteo conscientemente en cada repetición. Es el motor de la carrera y el músculo que más runners ignoran.",
+    "El hip thrust de hoy se traduce en potencia al subir cuestas en la carrera. Conexión directa.",
+    "Construyes fuerza aquí para no necesitar fisioterapeuta en el km 15. Cada serie vale.",
+  ],
+  rest: [
+    "Descansar no es debilidad — es disciplina. Los atletas de élite protegen el descanso con la misma energía con la que entrenan.",
+    "Hoy el cuerpo repara. La hormona de crecimiento se libera durante el sueño. Duerme 7-8h y deja que la magia pase.",
+    "El mejor entrenamiento que puedes hacer hoy es no entrenar. Confía en el proceso.",
+    "Si sientes el impulso de añadir un run hoy — no lo hagas. El sobreentrenamiento es el enemigo más silencioso de las runners.",
+    "Hidratación, proteína, sueño. Esos son tus entrenamientos de hoy.",
+  ],
+  race: [
+    "20 semanas de trabajo para este momento. Todo lo que entrenaste está en tus piernas. Hoy solo ejecutas.",
+    "Sale más lento de lo que quieres en los primeros 5km. La carrera se gana o se pierde en el km 6-15.",
+    "Cuando llegue el km 16 y sea difícil — recuerda cada long run que completaste. Los has vivido. Los sobreviviste. Esto también.",
+  ],
+};
+
+function getTip(wkType, week) {
+  const pool = TIPS[wkType] || TIPS.rest;
+  // Rotate tip based on week to vary them
+  return pool[week % pool.length];
+}
+
+// ── PHASES ───────────────────────────────────────────────────────────────────
+const PHASES=[
+  {id:1,name:"BASE",      weeks:[1,2,3,4,5],         color:"var(--green)"},
+  {id:2,name:"DESARROLLO",weeks:[6,7,8,9,10,11],     color:"var(--amber)"},
+  {id:3,name:"PICO",      weeks:[12,13,14,15,16,17], color:"var(--orange)"},
+  {id:4,name:"TAPER",     weeks:[18,19,20],           color:"var(--violet)"},
+];
+const getPhase=w=>PHASES.find(p=>p.weeks.includes(w))||PHASES[3];
+const DAY=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+// ── SHARED SESSIONS ───────────────────────────────────────────────────────────
+const GYMX=(label,wo,wu,cd,preF,postF)=>({wk:"gym",label,km:0,workout:wo,warmup:wu,cooldown:cd,preFood:preF,postFood:postF});
+const RSTX={wk:"rest",label:"Descanso activo",km:0,workout:["Descanso total o caminata suave 20min","Foam roller cuerpo completo 10min","Movilidad caderas y tobillos"],warmup:[],cooldown:[],preFood:"Come normal y bien",postFood:"Prioriza proteína y verduras en la cena"};
+
+const GYM_A=GYMX("Fuerza A — Piernas",
+  ["Sentadillas goblet 4×12","Peso muerto 3×10","Hip thrust 4×12","Step-up mancuerna 3×10/lado","Plancha lateral 3×30s","Dead bug 3×10"],
+  ["Calentamiento articular 5min","Hip circles 10/lado","Sentadillas bodyweight 2×10 para activar"],
+  ["Psoas 45s/lado","Piriforme sentada 45s/lado","Cuádriceps de pie 45s","Pantorrilla pared 60s","Foam roller cuádriceps 2min/pierna"],
+  "Comida completa 2-3h antes o batido proteína 30min antes",
+  "Batido proteína + carbohidrato en 45min. Yogur griego + granola o batido + plátano"
+);
+const GYM_B=GYMX("Fuerza B — Core y Glúteo",
+  ["Estocadas mancuerna 4×12/lado","Glúteo cable 3×15","Peso muerto rumano 3×10","Elevación pantorrilla 4×20","Abdominales bicicleta 3×20","Copenhagen plank 3×20s/lado"],
+  ["Clamshell con banda 15/lado","Monster walk 2×15 pasos","Puente glúteo unilateral 2×10"],
+  ["Isquiotibiales 45s/pierna","Piriforme tumbada 45s/lado","Aductores mariposa 60s","Foam roller glúteos 2min","Cat-cow 10 respiraciones"],
+  "Snack ligero 1h antes — plátano o barrita de avena",
+  "Proteína + carbohidrato: huevos con tostada o batido con leche"
+);
+
+const WU_RUN=["Leg swings frontales 15/lado","Leg swings laterales 15/lado","Hip circles 10/lado","Glute bridges 15 reps","Rotación tobillos 10/pie"];
+const WU_SPEED=["Leg swings dinámicos 15/lado","High knees suaves 30s","Skipping ligero 20s","4×80m progresivos hasta pace 5K"];
+const CD_RUN=["Psoas 45s/lado","Isquiotibiales 45s/pierna","Cuádriceps de pie 45s/pierna","Pantorrilla pared 60s/pierna","IT band tumbada 45s/lado"];
+const CD_LONG=[...CD_RUN,"Foam roller piernas 10min","Elevación piernas pared 5min"];
+
+function r(label,km,pace,wo,wu,cd,preF,postF,gel=null){
+  const wk=label.toLowerCase().includes("long")||label.toLowerCase().includes("largo")||km>=15?"long":
+           label.toLowerCase().includes("speed")||label.toLowerCase().includes("fartlek")||label.toLowerCase().includes("tempo")||label.toLowerCase().includes("intervals")||label.toLowerCase().includes("hills")?"speed":
+           label.toLowerCase().includes("carrera")||label.toLowerCase().includes("🏁")?"race":"recovery";
+  return{wk,label,km,pace,workout:wo,warmup:wu,cooldown:cd,preFood:preF,postFood:postF,gel};
+}
+
+// ── BUILD PLAN ────────────────────────────────────────────────────────────────
+function buildPlan(){
+  const p={};
+
+  // FASE BASE (1-5)
+  p[1]={
+    1:r("Recovery Z2 — 6km",6,"8:00–8:20/km",["6km zona 2 muy suave","Pace conversacional — puedes cantar","Sin mirar el ritmo, corre por sensaciones","Cadencia ~170spm"],WU_RUN,CD_RUN,"Avena con plátano y miel 1.5h antes","Yogur griego + granola o batido proteína"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — Fartlek 5km",5,"Fartlek",["5min calentamiento 8:20/km","20min fartlek: 1min duro (6:30/km) / 2min fácil (8:00/km)","5min vuelta calma","Primer speed run — por sensaciones, no por el reloj"],WU_SPEED,CD_RUN,"Tostada con aguacate y huevo 1h antes","Batido proteína + plátano en 45min"),
+    5:GYM_B,
+    6:r("Long Run — 12km",12,"8:00–8:20/km",["12km ritmo progression","Km 1-10: 8:00/km cómoda","Km 10-12: 7:40/km si te sientes bien","Primer long run — disfruta cada km"],WU_RUN,CD_LONG,"Desayuno completo 2h antes: avena+huevo+plátano","Arroz con pollo y verduras + batido proteína"),
+    7:RSTX,
+  };
+  p[2]={
+    1:r("Recovery Z2 — 6km",6,"7:50–8:10/km",["6km zona 2","Progression suave, empieza lento","Foco en la respiración rítmica"],WU_RUN,CD_RUN,"Plátano + café 45min antes","Yogur griego + frutos secos"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — 8×1min",5.5,"6:20/km",["5min calentamiento 8:20/km","8×1min a 6:20/km — 1min recuperación entre series","5min vuelta calma","Mantén el pace en las últimas series — ahí está el trabajo"],WU_SPEED,CD_RUN,"Tostada integral + plátano 1h antes","Batido proteína + leche"),
+    5:GYM_B,
+    6:r("Long Run — 13km",13,"8:00/km→7:40/km",["13km progression","Km 1-9: 8:00/km","Km 10-13: 7:40/km","Primer incremento sobre tu base actual"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Comida completa de recuperación"),
+    7:RSTX,
+  };
+  p[3]={
+    1:r("Recovery Z2 — 7km",7,"7:50–8:10/km",["7km zona 2","Si no puedes hablar, más lento","Foco en cadencia"],WU_RUN,CD_RUN,"Avena + fruta","Yogur + proteína"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — Hills",5.5,"Esfuerzo",["5min calentamiento","5 series: 45s cuesta a esfuerzo 10K + 15s máximo","1:15min rec tras 10K · 45s rec tras máximo","Busca cuesta de 4-6% pendiente"],WU_SPEED,CD_RUN,"Tostada + mermelada 1h antes","Batido proteína + plátano"),
+    5:GYM_B,
+    6:r("Long Run — 14km ⭐",14,"8:00/km→7:30/km",["14km — primera vez superando tu máximo actual","Km 1-10: 8:00/km","Km 11-14: 7:30/km","MILESTONE: 14km 🎉"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Comida grande: arroz+pollo+verdura+batido"),
+    7:RSTX,
+  };
+  p[4]={
+    1:r("Recovery DESCARGA — 6km",6,"8:10–8:30/km",["Semana de descarga — todo suave","6km sin presión ni objetivos"],WU_RUN,CD_RUN,"Normal, lo que apetezca","Normal"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed DESCARGA — Fartlek",4.5,"Descarga",["Semana de descarga — versión suave","5min calentamiento + 15min fartlek suave + 5min calma"],WU_SPEED,CD_RUN,"Normal","Normal"),
+    5:RSTX,
+    6:r("Largo DESCARGA — 11km",11,"8:00–8:20/km",["11km zona 2 — descarga","Sin presión — disfruta el movimiento"],WU_RUN,CD_RUN,"Desayuno normal","Comida normal"),
+    7:RSTX,
+  };
+  p[5]={
+    1:r("Recovery Z2 — 7km",7,"7:40–8:00/km",["7km zona 2","Cadencia 170spm — cuenta los pasos","Fin de fase base 🌱"],WU_RUN,CD_RUN,"Avena + plátano + café","Yogur + granola + proteína"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — 6×600m",7,"6:30/km",["2km calentamiento 8:00/km","6×600m a 6:30/km — 2min recuperación","2km vuelta calma","Primera sesión de intervalos largos"],WU_SPEED,CD_RUN,"Tostada integral + huevo 1.5h antes","Batido proteína + fruta"),
+    5:GYM_B,
+    6:{...r("Long Run — 15km 🔥",15,"7:50/km→7:20/km",["15km — entrada en desarrollo","Km 1-10: 7:50/km","Km 11-15: 7:20/km","Gel en km 8 si tardas +75min"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Arroz+pollo+verdura — comida de recuperación seria"),gel:{km:8,brand:"Maurten 100 o SIS Go",note:"Siempre con agua. Tómalo antes de sentir que lo necesitas."}},
+    7:RSTX,
+  };
+
+  // FASE DESARROLLO (6-11)
+  p[6]={
+    1:r("Recovery Z2 — 7km",7,"7:30–7:50/km",["7km zona 2","Progression: empieza 8:00 termina 7:30"],WU_RUN,CD_RUN,"Plátano + café","Yogur griego + granola"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — Tempo 5km",8,"6:40/km",["2km calentamiento","5km tempo a 6:40/km — duro pero sostenible","1km vuelta calma","7/10 de esfuerzo: incómodo pero aguantable"],WU_SPEED,CD_RUN,"Tostada + aguacate + huevo 1.5h antes","Batido proteína + leche + plátano"),
+    5:GYM_B,
+    6:{...r("Long Run — 15km",15,"7:40/km→7:10/km",["15km","Km 1-10: 7:40/km","Km 11-15: 7:10/km","Gel en km 8 — practica la logística"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Comida completa"),gel:{km:8,brand:"Maurten 100 o SIS Go",note:"Primer run con gel. Tómalo en movimiento con agua."}},
+    7:RSTX,
+  };
+  p[7]={
+    1:r("Recovery Z2 — 8km",8,"7:30–7:50/km",["8km zona 2","8km de recovery ya — la base aeróbica crece"],WU_RUN,CD_RUN,"Avena + plátano","Yogur + proteína"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed — 8×600m",8,"6:20/km",["2km calentamiento","8×600m a 6:20/km — 90s recuperación","2km vuelta calma","Más series — mantén pace constante"],WU_SPEED,CD_RUN,"Tostada + mermelada + plátano 1h antes","Batido proteína"),
+    5:GYM_A,
+    6:{...r("Long Run — 16km ⭐",16,"7:40/km→7:00/km",["16km — primera vez en 16km","Km 1-11: 7:40/km","Km 12-16: 7:00/km","Gel en km 8"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Arroz+pollo+verdura+batido"),gel:{km:8,brand:"Maurten 100",note:"Ya deberías conocer el gel. En movimiento."}},
+    7:RSTX,
+  };
+  p[8]={
+    1:r("Recovery DESCARGA — 6km",6,"8:00–8:20/km",["Semana descarga — 6km suave","Sin presión"],WU_RUN,CD_RUN,"Normal","Normal"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed DESCARGA — Fartlek",5,"Descarga",["Fartlek suave — 5min+15min+5min"],WU_SPEED,CD_RUN,"Normal","Normal"),
+    5:GYM_B,
+    6:r("Largo DESCARGA — 12km",12,"8:00–8:20/km",["12km zona 2 — descarga","Disfrutar el movimiento"],WU_RUN,CD_RUN,"Desayuno normal","Normal"),
+    7:RSTX,
+  };
+  p[9]={
+    1:r("Recovery Z2 — 8km",8,"7:20–7:40/km",["8km zona 2","Volvemos fuertes tras la descarga"],WU_RUN,CD_RUN,"Avena + plátano + café","Yogur + granola + proteína"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed — Tempo 6km",9,"6:30/km",["2km calentamiento","6km tempo a 6:30/km","1km vuelta calma","Ahora el tempo es 6km — neta mejora"],WU_SPEED,CD_RUN,"Tostada + aguacate + huevo 1.5h antes","Batido proteína + plátano"),
+    5:GYM_A,
+    6:{...r("Long Run — 17km",17,"7:30/km→7:00/km",["17km","Km 1-11: 7:30/km","Km 12-17: 7:00/km","Gel km 8 y km 14"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Comida grande de recuperación"),gel:{km:"8 y 14",brand:"Maurten 100",note:"Primer run con dos geles. Gel 1 km8, Gel 2 km14. Siempre agua."}},
+    7:RSTX,
+  };
+  p[10]={
+    1:r("Recovery Z2 — 8km",8,"7:20–7:40/km",["8km zona 2"],WU_RUN,CD_RUN,"Normal","Yogur + proteína"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — 5×800m",9,"6:10/km",["2km calentamiento","5×800m a 6:10/km — 2min recuperación","2km vuelta calma","Los 800m son el intervalo core de media maratón"],WU_SPEED,CD_RUN,"Tostada + plátano 1h antes","Batido proteína"),
+    5:GYM_B,
+    6:{...r("Long Run — 18km ⭐",18,"7:20/km→6:50/km",["18km — MILESTONE","Km 1-11: 7:20/km","Km 12-18: 6:50/km","Test: km 10 en menos de 1h05","Gel km 8 y km 15"],WU_RUN,CD_LONG,"Desayuno completo 2.5h antes","Comida grande: pollo+arroz+verdura+batido"),gel:{km:"8 y 15",brand:"Maurten 100",note:"Ya es rutina. Coges el gel sin pensarlo."}},
+    7:RSTX,
+  };
+  p[11]={
+    1:r("Recovery Z2 — 8km",8,"7:10–7:30/km",["8km zona 2","Última semana de desarrollo"],WU_RUN,CD_RUN,"Normal","Yogur + proteína"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed — Tempo Prog. 7km",9.5,"6:30→6:00/km",["1.5km calentamiento","7km tempo progresivo: 6:30 → termina 6:00/km","1km vuelta calma","Cada km más rápido — sensation de velocidad creciente"],WU_SPEED,CD_RUN,"Tostada + plátano + café 1.5h antes","Batido + fruta"),
+    5:GYM_A,
+    6:{...r("Long Run — 18km",18,"7:20/km→6:45/km",["18km segunda vez","Más cómoda que la primera","Km 1-10: 7:20/km","Km 11-18: 6:45/km"],WU_RUN,CD_LONG,"Desayuno completo","Comida completa"),gel:{km:"8 y 15",brand:"Maurten 100",note:"Automático ya. Perfecto."}},
+    7:RSTX,
+  };
+
+  // FASE PICO (12-17)
+  p[12]={
+    1:r("Recovery Z2 — 8km",8,"7:10–7:30/km",["8km zona 2","Entramos en pico — el trabajo más importante"],WU_RUN,CD_RUN,"Normal","Yogur + proteína"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — 6×800m",10,"5:55/km",["2km calentamiento","6×800m a 5:55/km — 2min recuperación","2km vuelta calma","Más rápido que los 800m anteriores"],WU_SPEED,CD_RUN,"Tostada + aguacate + huevo 1.5h antes","Batido proteína"),
+    5:GYM_B,
+    6:{...r("Long Run — 19km 🎯",19,"7:30/km→6:10/km",["19km PRIMER SIMULACRO","Km 1-3: 7:30/km calentamiento","Km 4-16: 6:10–6:20/km (ritmo meta carrera)","Km 17-19: 7:00/km vuelta calma","Gel km 7 y km 14"],WU_RUN,CD_LONG,"DESAYUNO DE CARRERA: porridge+plátano+miel 2.5h antes","Comida grande de recuperación + batido"),gel:{km:"7 y 14",brand:"Maurten 100",note:"Simula exactamente el plan de gel del día de carrera."}},
+    7:RSTX,
+  };
+  p[13]={
+    1:r("Recovery Z2 — 7km",7,"8:00/km",["7km muy suave post-simulacro","Las piernas pueden estar pesadas — es normal"],WU_RUN,CD_RUN,"Normal","Yogur + proteína"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed — Tempo 8km",10.5,"6:10/km",["1.5km calentamiento","8km tempo a 6:10/km","1km vuelta calma","El tempo más largo del plan"],WU_SPEED,CD_RUN,"Tostada + plátano + café 1.5h antes","Batido + fruta"),
+    5:GYM_A,
+    6:{...r("Long Run — 20km 🔥",20,"7:30/km→6:20/km",["20km — EL RUN MÁS LARGO DEL PLAN","Km 1-3: 7:30/km","Km 4-17: 6:20/km","Km 18-20: 7:00/km vuelta calma","Gel km 7, km 13 y km 18"],WU_RUN,CD_LONG,"DESAYUNO DE CARRERA 2.5h antes","COMIDA ÉPICA de recuperación 🍽️ — te lo has ganado"),gel:{km:"7, 13 y 18",brand:"Maurten 100",note:"Tres geles — exactamente como en la carrera real."}},
+    7:RSTX,
+  };
+  p[14]={
+    1:r("Recovery Z2 — 7km",7,"8:00/km",["7km suave post 20K","El cuerpo en modo reparación"],WU_RUN,CD_RUN,"Normal","Yogur + proteína"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — 4×1000m",9,"5:50/km",["2km calentamiento","4×1000m a 5:50/km — 2:30min recuperación","2km vuelta calma","El intervalo más largo — sostenibilidad es clave"],WU_SPEED,CD_RUN,"Tostada + aguacate 1.5h antes","Batido proteína"),
+    5:GYM_B,
+    6:{...r("Long Run — 18km",18,"7:20/km→6:10/km",["18km","Km 1-3: 7:20/km","Km 4-15: 6:10/km","Km 16-18: 7:00/km","Gel km 7 y km 13"],WU_RUN,CD_LONG,"Desayuno completo","Comida completa"),gel:{km:"7 y 13",brand:"Maurten 100",note:"Rutina establecida."}},
+    7:RSTX,
+  };
+  p[15]={
+    1:r("Recovery Z2 — 8km",8,"7:10–7:30/km",["8km zona 2"],WU_RUN,CD_RUN,"Normal","Normal"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed — Tempo Prog. 8km",10,"6:30→5:50/km",["1.5km calentamiento","8km progresivo: 6:30→6:10→5:50/km","1km vuelta calma","La sensación de aceleración progresiva"],WU_SPEED,CD_RUN,"Desayuno ligero 1.5h antes","Batido + fruta"),
+    5:GYM_A,
+    6:{...r("Long Run — 19km 🎯",19,"7:30/km→5:50/km",["19km SIMULACRO FINAL","Km 1-3: 7:30/km","Km 4-16: 5:50–6:00/km (pace meta)","Km 17-19: 7:00/km","Gel km 7 y km 14"],WU_RUN,CD_LONG,"Desayuno de carrera","Comida completa + masaje esta semana 💆"),gel:{km:"7 y 14",brand:"Maurten 100",note:"Último ensayo completo. Ya lo dominas."}},
+    7:RSTX,
+  };
+  p[16]={
+    1:r("Recovery Z2 — 6km",6,"8:00/km",["6km suave — transición a taper","El pico termina"],WU_RUN,CD_RUN,"Normal","Normal"),
+    2:GYM_A,3:RSTX,
+    4:r("Speed — 4×800m suave",7,"6:10/km",["2km calentamiento","4×800m a 6:10/km — 2min recuperación","2km vuelta calma","Semana de transición — no forzar"],WU_SPEED,CD_RUN,"Normal","Normal"),
+    5:GYM_B,
+    6:r("Largo suave — 14km",14,"7:20–7:40/km",["14km zona 2","Ya tienes todo lo que necesitas","Disfrutar"],WU_RUN,CD_RUN,"Desayuno normal","Comida completa"),
+    7:RSTX,
+  };
+  p[17]={
+    1:r("Recovery Z2 — 6km",6,"8:00/km",["6km zona 2","Taper — confía en el trabajo"],WU_RUN,CD_RUN,"Normal","Normal"),
+    2:GYM_B,3:RSTX,
+    4:r("Speed — Tempo corto 4km",7,"6:10/km",["2km calentamiento","4km tempo a 6:10/km","1km vuelta calma","Mantener estímulo, bajar dosis"],WU_SPEED,CD_RUN,"Normal","Normal"),
+    5:RSTX,
+    6:r("Long Run — 12km",12,"7:40/km→7:00/km",["12km","Km 1-7: 7:40/km","Km 8-12: 7:00/km","¿12km se siente corto? Eso es el taper."],WU_RUN,CD_RUN,"Desayuno normal","Comida completa"),
+    7:RSTX,
+  };
+
+  // FASE TAPER (18-20)
+  p[18]={
+    1:r("Recovery — 5km",5,"8:10/km",["5km muy suave","Cuerpo acumulando energía para octubre"],WU_RUN,CD_RUN,"Normal","Normal"),
+    2:GYM_A,3:RSTX,
+    4:r("Activación + Strides",5,"Suave",["3km calentamiento suave","4×100m strides a ritmo 5K","Recuperación completa entre strides","1km vuelta calma"],WU_SPEED,CD_RUN,"Normal","Normal"),
+    5:RSTX,
+    6:r("Long Run — 10km",10,"7:40–8:00/km",["10km suave","¿Las piernas se sienten frescas? Es el taper.","Visualiza la carrera mientras corres"],WU_RUN,CD_RUN,"Desayuno normal","Comida completa"),
+    7:RSTX,
+  };
+  p[19]={
+    1:r("Recovery — 4km",4,"8:10/km",["4km muy suave","Semana de carrera — preservar energía"],WU_RUN,CD_RUN,"Normal","Normal"),
+    2:RSTX,
+    3:r("Activación pre-carrera",4,"Suave",["2km muy suave","4×80m acelerones suaves","1km calma","Solo despertar el sistema nervioso"],WU_RUN,CD_RUN,"Normal","Normal"),
+    4:r("Recovery corto — 3km",3,"Suave",["3km muy suave","El último antes de la carrera"],WU_RUN,CD_RUN,"Normal","Normal"),
+    5:RSTX,6:RSTX,
+    7:{wk:"race",label:"🏁 MEDIA MARATÓN — Oct 2026",km:21.1,pace:"5:41/km meta",
+      workout:["🎯 META: 21km en 2:00:00 (5:41/km)","Desayuno 2.5h antes: porridge+plátano+miel+café","Calentar 15min muy suave antes de la salida","Km 1-5: NO salir rápido — máximo 5:50/km","Km 5-15: ritmo objetivo 5:41/km","Km 15-21: corazón y 20 semanas de trabajo 💪","Gel km 7 y km 14 con agua en el avituallamiento"],
+      warmup:["10min caminata rápida","Leg swings 10/lado","Glute bridges 10","4×80m muy suaves 10min antes de la salida"],
+      cooldown:["Caminata 10min tras cruzar la meta","Estiramiento completo una vez hayas comido","Hoy no foam roller — el cuerpo necesita reposar"],
+      preFood:"Porridge con plátano y miel 2.5h antes. Café si lo tomas habitualmente. Sin nada nuevo.",
+      postFood:"¡TODO LO QUE QUIERAS! — Te lo has ganado 🥂",
+      gel:{km:"7 y 14",brand:"Maurten 100",note:"Los mismos que practicaste. Sin sorpresas. Con agua."}},
+  };
+  p[20]={
+    1:RSTX,2:RSTX,3:RSTX,4:RSTX,5:RSTX,6:RSTX,
+    7:{wk:"rest",label:"🏆 Semana Post-Carrera",km:0,workout:["¡LO LOGRASTE! 🏆","Descanso completo esta semana","Masaje de recuperación en los próximos días","Come bien y mucho — el cuerpo sigue reparándose 48-72h","Empieza a pensar en la siguiente meta... 😏"],warmup:[],cooldown:[],preFood:"Come todo lo que quieras esta semana",postFood:"Proteína y carbohidratos — el cuerpo sigue reparándose"},
+  };
+  return p;
+}
+const PLAN=buildPlan();
+const planKmWeek=w=>Object.values(PLAN[w]||{}).reduce((s,d)=>s+(d.km||0),0);
+const doneKmWeek=(w,done)=>Object.entries(PLAN[w]||{}).reduce((s,[d])=>done[`${w}-${d}`]?s+(PLAN[w][d].km||0):s,0);
+const totalPlanKm=Array.from({length:20},(_,i)=>i+1).reduce((s,w)=>s+planKmWeek(w),0);
+
+// ── STRAVA ────────────────────────────────────────────────────────────────────
+const CLIENT_ID="214998";
+const REDIRECT=()=>window.location.href.split("?")[0].split("#")[0];
+const stravaUrl=()=>`https://www.strava.com/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT())}&response_type=code&scope=activity:read_all&state=paulav3`;
+const fmtPace=mps=>{if(!mps)return"--";const s=1/mps*1000/60;const m=Math.floor(s);const ss=Math.round((s-m)*60);return`${m}:${String(ss).padStart(2,"0")}`;};
+const fmtDist=m=>(m/1000).toFixed(1)+"km";
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App(){
+  const [week,setWeek]=useState(1);
+  const [selDay,setSelDay]=useState(null);
+  const [screen,setScreen]=useState("plan");
+  const [guideTab,setGuideTab]=useState("warmup");
+
+  const [done,setDoneRaw]=useState({});
+  const [notes,setNotesRaw]=useState({});
+  const [noteOpen,setNoteOpen]=useState(false);
+  const [noteDraft,setNoteDraft]=useState("");
+
+  const [planStart,setPlanStart]=useState(()=>LS.get("pv3_start"));
+  const [datePicker,setDatePicker]=useState(false);
+  const [strava,setStrava]=useState(()=>LS.get("pv3_str"));
+  const [acts,setActs]=useState([]);
+  const [syncing,setSyncing]=useState(false);
+  const [syncMsg,setSyncMsg]=useState("");
+  const [secretOpen,setSecretOpen]=useState(null);
+  const [secretVal,setSecretVal]=useState("");
+
+  useEffect(()=>{
+    (async()=>{
+      const [d,n,m]=await Promise.all([Cloud.get("done"),Cloud.get("notes"),Cloud.get("meta")]);
+      if(d)setDoneRaw(d); if(n)setNotesRaw(n);
+      if(m?.start&&!planStart){LS.set("pv3_start",m.start);setPlanStart(m.start);}
+    })();
+  },[]);
+
+  useEffect(()=>{
+    const p=new URLSearchParams(window.location.search);
+    const code=p.get("code"),state=p.get("state");
+    if(code&&state==="paulav3"){
+      window.history.replaceState({},"",window.location.pathname);
+      const sd=LS.get("pv3_str");
+      if(sd?.secret)doExchange(code,sd.secret);
+      else setSecretOpen({code});
+    }
+  },[]);
+
+  useEffect(()=>{
+    if(!planStart)return;
+    const diff=Math.floor((new Date()-new Date(planStart))/86400000);
+    setWeek(Math.max(1,Math.min(20,Math.floor(diff/7)+1)));
+  },[planStart]);
+
+  const saveDone=async nd=>{setDoneRaw(nd);await Cloud.set("done",nd);};
+  const saveNotes=async nn=>{setNotesRaw(nn);await Cloud.set("notes",nn);};
+
+  async function toggleDone(w,d){
+    const k=`${w}-${d}`;const n={...done};
+    n[k]?delete n[k]:(n[k]={manual:true,ts:Date.now()});
+    await saveDone(n);
+  }
+
+  async function doExchange(code,secret){
+    setSyncing(true);setSyncMsg("Conectando...");
+    try{
+      const r=await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:secret,code,grant_type:"authorization_code"})});
+      const data=await r.json();
+      const sd={at:data.access_token,rt:data.refresh_token,exp:data.expires_at,secret,athlete:data.athlete};
+      LS.set("pv3_str",sd);setStrava(sd);
+      await syncActs(data.access_token);
+    }catch{setSyncMsg("❌ Verifica el Client Secret");}
+    setSyncing(false);setSecretOpen(null);
+  }
+
+  async function syncActs(tokenOverride){
+    setSyncing(true);setSyncMsg("Sincronizando Strava...");
+    try{
+      let sd=LS.get("pv3_str");let token=tokenOverride||sd?.at;
+      if(sd&&Date.now()/1000>sd.exp-60){
+        const r=await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:CLIENT_ID,client_secret:sd.secret,refresh_token:sd.rt,grant_type:"refresh_token"})});
+        const data=await r.json();token=data.access_token;
+        const upd={...sd,at:data.access_token,rt:data.refresh_token,exp:data.expires_at};
+        LS.set("pv3_str",upd);setStrava(upd);
+      }
+      let all=[],page=1,batch;
+      do{const r=await fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=100&page=${page}`,{headers:{Authorization:`Bearer ${token}`}});batch=await r.json();all=[...all,...batch];page++;}while(batch.length===100);
+      const runs=all.filter(a=>a.type==="Run"||a.type==="TrailRun");
+      setActs(runs);
+      if(planStart)autoMark(runs);
+      setSyncMsg(`✓ ${runs.length} carreras`);
+      setTimeout(()=>setSyncMsg(""),3000);
+    }catch{setSyncMsg("❌ Error al sincronizar");}
+    setSyncing(false);
+  }
+
+  function autoMark(activities){
+    const start=new Date(planStart);const nd={...done};
+    activities.forEach(act=>{
+      const ad=new Date(act.start_date_local);
+      const diff=Math.floor((ad-start)/86400000);
+      if(diff<0)return;
+      const w=Math.floor(diff/7)+1,d=(ad.getDay()+6)%7+1;
+      if(w>=1&&w<=20&&PLAN[w]?.[d]&&["run","recovery","speed","long","race"].includes(PLAN[w][d].wk))
+        nd[`${w}-${d}`]={auto:true,id:act.id,name:act.name,dist:act.distance,time:act.moving_time,pace:act.average_speed,hr:act.average_heartrate,elev:act.total_elevation_gain};
+    });
+    saveDone(nd);
+  }
+
+  // Derived
+  const phase=getPhase(week);
+  const weekDays=PLAN[week]||{};
+  const totalKmDone=Array.from({length:20},(_,i)=>i+1).reduce((s,w)=>s+doneKmWeek(w,done),0);
+  const totalSess=Array.from({length:20},(_,i)=>i+1).reduce((s,w)=>s+Object.keys(PLAN[w]||{}).length,0);
+  const doneSess=Object.values(done).filter(Boolean).length;
+  const adherence=totalSess>0?Math.round((doneSess/totalSess)*100):0;
+  const avgPace=acts.length?acts.reduce((s,a)=>s+a.average_speed,0)/acts.length:null;
+  const wkKmDone=doneKmWeek(week,done);
+  const wkKmPlan=planKmWeek(week);
+  const selData=selDay&&PLAN[week]?.[selDay];
+  const selKey=selDay?`${week}-${selDay}`:null;
+  const selDone=selKey&&done[selKey];
+  const selWK=selData?WK[selData.wk]||WK.rest:null;
+  const selTip=selData?getTip(selData.wk,week):null;
+  const noteText=selKey&&notes[selKey]?.text||"";
+
+  return(
+    <div style={{minHeight:"100vh",background:"#fff",paddingBottom:72}}>
+
+      {/* SECRET MODAL */}
+      {secretOpen&&(
+        <ModalSheet onClose={()=>setSecretOpen(null)}>
+          <p className="h2" style={{marginBottom:4}}>Client Secret de Strava</p>
+          <p className="body" style={{marginBottom:16}}>Solo se guarda en este dispositivo. Nunca sale de aquí.</p>
+          <input type="password" value={secretVal} onChange={e=>setSecretVal(e.target.value)} placeholder="Pega tu Client Secret aquí"
+            style={{width:"100%",padding:"13px 14px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,outline:"none",marginBottom:10,color:"var(--ink)"}}/>
+          <button className="btn-primary" onClick={()=>{if(!secretVal.trim())return;doExchange(secretOpen.code,secretVal.trim());setSecretVal("");}}>Conectar con Strava</button>
+          {syncMsg&&<p style={{marginTop:8,fontSize:12,color:"var(--green)",textAlign:"center"}}>{syncMsg}</p>}
+        </ModalSheet>
+      )}
+
+      {/* DATE PICKER */}
+      {datePicker&&(
+        <ModalSheet onClose={()=>setDatePicker(false)}>
+          <p className="h2" style={{marginBottom:4}}>¿Cuándo empezaste el plan?</p>
+          <p className="body" style={{marginBottom:16}}>Esto determina en qué semana estás automáticamente.</p>
+          <input type="date" id="dpick" defaultValue={planStart||new Date().toISOString().split("T")[0]}
+            style={{width:"100%",padding:"13px 14px",borderRadius:10,border:"1.5px solid var(--border)",fontSize:14,outline:"none",marginBottom:10,color:"var(--ink)"}}/>
+          <button className="btn-primary" onClick={async()=>{
+            const v=document.getElementById("dpick").value;if(!v)return;
+            LS.set("pv3_start",v);setPlanStart(v);
+            await Cloud.set("meta",{start:v});
+            setDatePicker(false);
+          }}>Guardar fecha de inicio</button>
+        </ModalSheet>
+      )}
+
+      {/* ── HEADER ── */}
+      <div style={{background:"#fff",borderBottom:"1.5px solid var(--border)",padding:"14px 16px 10px",position:"sticky",top:0,zIndex:50}}>
+        <div style={{maxWidth:500,margin:"0 auto"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:20}}>🔥</span>
+                <span className="h1" style={{fontSize:18}}>Paula Runs</span>
+                <span style={{fontSize:11,background:"var(--orange-l)",color:"var(--orange)",borderRadius:6,padding:"2px 7px",fontWeight:700}}>Oct 2026</span>
+              </div>
+              <div className="caption" style={{marginTop:2}}>Semana {week} · {phase.name} · {totalKmDone.toFixed(0)}km corridos</div>
+            </div>
+            {strava?.athlete?(
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <img src={strava.athlete.profile_medium} alt="" style={{width:32,height:32,borderRadius:"50%",border:"2.5px solid var(--orange)"}}/>
+                <button onClick={()=>syncActs()} disabled={syncing}
+                  style={{background:"var(--orange-l)",border:"1px solid #FC4C0233",color:"var(--orange)",borderRadius:8,padding:"5px 11px",fontSize:10,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap"}}>
+                  {syncing?"⟳":syncMsg||"⚡ Sync"}
+                </button>
+              </div>
+            ):(
+              <button onClick={()=>window.location.href=stravaUrl()}
+                style={{background:"#FC4C02",border:"none",color:"#fff",borderRadius:9,padding:"7px 13px",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                ⚡ Strava
+              </button>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          <div className="progress-track">
+            <div className="progress-fill" style={{width:`${Math.min(100,(totalKmDone/totalPlanKm)*100)}%`,background:`linear-gradient(90deg,#FC4C02,#F59E0B)`}}/>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+            <span className="caption" style={{fontSize:10}}>{totalKmDone.toFixed(0)} / {totalPlanKm.toFixed(0)} km</span>
+            <span className="caption" style={{fontSize:10,color:"var(--orange)"}}>{adherence}% adherencia</span>
+          </div>
+
+          {/* Screen tabs */}
+          <div style={{display:"flex",gap:4,marginTop:10}}>
+            {[["plan","📅 Plan"],["strava","⚡ Strava"],["guide","📚 Guías"]].map(([s,l])=>(
+              <button key={s} onClick={()=>{setScreen(s);setSelDay(null);}}
+                style={{flex:1,padding:"7px 4px",borderRadius:9,border:`1.5px solid ${screen===s?"var(--orange)":"var(--border)"}`,background:screen===s?"var(--orange)":"transparent",color:screen===s?"#fff":"var(--ink3)",fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:500,margin:"0 auto",padding:"16px 14px"}}>
+
+        {/* ══ PLAN ══ */}
+        {screen==="plan"&&<>
+          {/* Phase pills */}
+          <div style={{display:"flex",gap:5,marginBottom:14,overflowX:"auto",paddingBottom:2}}>
+            {PHASES.map(ph=>(
+              <button key={ph.id} onClick={()=>{setWeek(ph.weeks[0]);setSelDay(null);}}
+                style={{flex:1,minWidth:70,padding:"7px 8px",borderRadius:9,background:ph.weeks.includes(week)?"var(--orange-l)":"var(--bg)",border:`1.5px solid ${ph.weeks.includes(week)?"var(--orange)":"var(--border)"}`,cursor:"pointer",transition:"all .15s"}}>
+                <div style={{fontSize:9,fontWeight:700,color:ph.weeks.includes(week)?"var(--orange)":"var(--ink3)",textTransform:"uppercase",letterSpacing:.4}}>{ph.name}</div>
+                <div style={{fontSize:8,color:"var(--ink3)",marginTop:1}}>S{ph.weeks[0]}–{ph.weeks[ph.weeks.length-1]}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Week pills */}
+          <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:14}}>
+            {Array.from({length:20},(_,i)=>i+1).map(w=>{
+              const ph=getPhase(w);
+              const pct=planKmWeek(w)>0?(doneKmWeek(w,done)/planKmWeek(w)):0;
+              const isActive=w===week;
+              return(
+                <button key={w} onClick={()=>{setWeek(w);setSelDay(null);}}
+                  style={{width:32,height:32,borderRadius:8,fontSize:10,fontWeight:600,border:`1.5px solid ${isActive?"var(--orange)":pct>=.9?"var(--green)":"var(--border)"}`,background:isActive?"var(--orange)":pct>=.9?"var(--green-l)":"#fff",color:isActive?"#fff":pct>=.9?"var(--green)":"var(--ink3)",cursor:"pointer",transition:"all .12s"}}>
+                  {w===20?"🏁":w}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Week header */}
+          <div className="card" style={{padding:"12px 14px",marginBottom:14,borderLeft:"4px solid var(--orange)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:7}}>
+                  <span style={{fontSize:16,fontWeight:800,color:"var(--ink)"}}>Semana {week}</span>
+                  <span style={{fontSize:10,background:"var(--orange-l)",color:"var(--orange)",borderRadius:6,padding:"2px 8px",fontWeight:700,textTransform:"uppercase"}}>{phase.name}</span>
+                </div>
+                {planStart&&<div className="caption" style={{marginTop:3}}>
+                  {new Date(new Date(planStart).getTime()+(week-1)*7*86400000).toLocaleDateString("es",{day:"numeric",month:"short"})} – {new Date(new Date(planStart).getTime()+((week-1)*7+6)*86400000).toLocaleDateString("es",{day:"numeric",month:"short"})}
+                </div>}
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:18,fontWeight:800,color:"var(--orange)"}}>{wkKmDone.toFixed(1)}<span style={{fontSize:10,color:"var(--ink3)"}}>/{wkKmPlan.toFixed(1)}km</span></div>
+                <div style={{width:60,height:4,background:"var(--border2)",borderRadius:2,marginTop:4,overflow:"hidden"}}>
+                  <div style={{height:"100%",borderRadius:2,background:"var(--orange)",width:`${wkKmPlan>0?Math.min(100,(wkKmDone/wkKmPlan)*100):0}%`}}/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Day grid */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginBottom:20}}>
+            {[1,2,3,4,5,6,7].map(d=>{
+              const data=weekDays[d];const k=`${week}-${d}`;const isDone=!!done[k];const isSel=selDay===d;
+              const wkConf=data?WK[data.wk]||WK.rest:null;
+              if(!data)return(
+                <div key={d} style={{height:72,background:"var(--bg)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <span style={{fontSize:8,color:"var(--border)",textTransform:"uppercase"}}>{DAY[d-1].charAt(0)}</span>
+                </div>
+              );
+              return(
+                <div key={d} onClick={()=>setSelDay(isSel?null:d)}
+                  style={{height:72,background:isDone?wkConf.light:"#fff",border:`1.5px solid ${isSel?wkConf.color:isDone?wkConf.color+"66":"var(--border)"}`,borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer",transition:"all .15s",position:"relative",boxShadow:isSel?`0 0 0 2px ${wkConf.color}44`:"none"}}>
+                  {isDone&&(
+                    <button onClick={e=>{e.stopPropagation();toggleDone(week,d);}}
+                      style={{position:"absolute",top:3,right:3,width:15,height:15,borderRadius:"50%",background:wkConf.color,border:"none",color:"#fff",fontSize:8,cursor:"pointer",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:0,lineHeight:1}}>✕</button>
+                  )}
+                  {notes[k]&&<div style={{position:"absolute",top:3,left:3,width:6,height:6,borderRadius:"50%",background:"var(--violet)"}}/>}
+                  <span style={{fontSize:18}}>{wkConf.icon}</span>
+                  <span style={{fontSize:8,color:isDone?wkConf.color:"var(--ink3)",fontWeight:600,textTransform:"uppercase",letterSpacing:.3}}>{DAY[d-1]}</span>
+                  {data.km>0&&<span style={{fontSize:8,color:isDone?wkConf.color:"var(--ink3)",fontWeight:500}}>{done[k]?.auto?fmtDist(done[k].dist):data.km+"k"}</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── DAY DETAIL — 2 col grid ── */}
+          {selData&&selWK&&(
+            <div className="slideUp">
+
+              {/* TIP — siempre primero y destacado */}
+              <div style={{background:selWK.light,borderLeft:`4px solid ${selWK.color}`,borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+                <div style={{fontSize:10,fontWeight:700,color:selWK.color,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}}>💡 Tip del día</div>
+                <div style={{fontSize:14,color:"var(--ink)",lineHeight:1.6,fontWeight:500,fontStyle:"italic"}}>"{selTip}"</div>
+              </div>
+
+              {/* Strava data si fue sincronizado */}
+              {selDone?.auto&&(
+                <div style={{background:"#FFF4EE",border:"1.5px solid #FC4C0230",borderRadius:14,padding:"12px 14px",marginBottom:14}}>
+                  <div style={{fontSize:10,fontWeight:700,color:"#FC4C02",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}}>⚡ Sincronizado de Strava</div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                    {[["Distancia",fmtDist(selDone.dist)],["Ritmo",fmtPace(selDone.pace)+"/k"],["Tiempo",selDone.time?`${Math.floor(selDone.time/60)}min`:"--"],["FC",selDone.hr?`♥${Math.round(selDone.hr)}`:"--"]].map(([l,v])=>(
+                      <div key={l} style={{textAlign:"center"}}>
+                        <div style={{fontSize:15,fontWeight:800,color:"#FC4C02"}}>{v}</div>
+                        <div style={{fontSize:9,color:"var(--ink3)",marginTop:2,textTransform:"uppercase",letterSpacing:.3}}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Botón completar */}
+              <button onClick={()=>toggleDone(week,selDay)}
+                style={{width:"100%",padding:"13px",borderRadius:12,border:selDone?"1.5px solid var(--border)":"none",background:selDone?"var(--bg)":selWK.color,color:selDone?"var(--ink3)":"#fff",fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:14,transition:"all .15s"}}>
+                {selDone?"✕ Desmarcar como completado":"✓ Marcar como completado"}
+              </button>
+
+              {/* 2-col boxes */}
+              <div className="grid2">
+                {/* Entrenamiento */}
+                <Box color={selWK.color} light={selWK.light} icon={selWK.icon} title={selData.label} tag={selWK.label}>
+                  {selData.pace&&<div style={{fontSize:11,color:selWK.color,fontWeight:600,marginBottom:6}}>🎯 {selData.pace}</div>}
+                  {selData.workout.map((x,i)=><BulletLine key={i} color={selWK.color}>{x}</BulletLine>)}
+                  {selData.gel&&(
+                    <div style={{marginTop:8,padding:"8px 10px",background:"var(--green-l)",borderRadius:8,border:"1px solid #00B37E33"}}>
+                      <div style={{fontSize:9,fontWeight:700,color:"var(--green)",textTransform:"uppercase",letterSpacing:.4,marginBottom:3}}>💧 Gel km {selData.gel.km}</div>
+                      <div style={{fontSize:11,color:"var(--ink2)"}}>{selData.gel.brand}</div>
+                      <div style={{fontSize:10,color:"var(--ink3)",marginTop:2}}>{selData.gel.note}</div>
+                    </div>
+                  )}
+                </Box>
+
+                {/* Nutrición */}
+                <Box color="var(--amber)" light="var(--amber-l)" icon="🍽️" title="Nutrición" tag="Comida">
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontSize:9,fontWeight:700,color:"var(--amber)",textTransform:"uppercase",letterSpacing:.4,marginBottom:3}}>Pre-entreno</div>
+                    <div style={{fontSize:11,color:"var(--ink2)",lineHeight:1.5}}>{selData.preFood}</div>
+                  </div>
+                  <div style={{borderTop:"1px solid var(--border)",paddingTop:8}}>
+                    <div style={{fontSize:9,fontWeight:700,color:"var(--green)",textTransform:"uppercase",letterSpacing:.4,marginBottom:3}}>Post-entreno</div>
+                    <div style={{fontSize:11,color:"var(--ink2)",lineHeight:1.5}}>{selData.postFood}</div>
+                  </div>
+                </Box>
+
+                {/* Calentamiento */}
+                {selData.warmup?.length>0&&(
+                  <Box color="var(--orange)" light="var(--orange-l)" icon="🔥" title="Calentamiento" tag="Pre-entreno">
+                    {selData.warmup.map((x,i)=><BulletLine key={i} color="var(--orange)">{x}</BulletLine>)}
+                  </Box>
+                )}
+
+                {/* Vuelta calma */}
+                {selData.cooldown?.length>0&&(
+                  <Box color="#0EA5E9" light="#EFF9FF" icon="❄️" title="Vuelta a la calma" tag="Post-entreno">
+                    {selData.cooldown.map((x,i)=><BulletLine key={i} color="#0EA5E9">{x}</BulletLine>)}
+                  </Box>
+                )}
+              </div>
+
+              {/* Notas — full width */}
+              <div className="card" style={{padding:"14px",marginTop:10}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                  <span style={{fontSize:16}}>📝</span>
+                  <span style={{fontWeight:600,fontSize:13,color:"var(--ink)"}}>Mis notas</span>
+                  {noteText&&<span style={{fontSize:10,color:"var(--violet)",background:"var(--violet-l)",padding:"2px 7px",borderRadius:10,fontWeight:600}}>guardada</span>}
+                </div>
+                {noteText&&!noteOpen&&(
+                  <div style={{background:"var(--bg)",borderRadius:10,padding:"10px 12px",marginBottom:8,fontSize:12,color:"var(--ink2)",lineHeight:1.6}}>{noteText}</div>
+                )}
+                {noteOpen?(
+                  <div>
+                    <textarea value={noteDraft} onChange={e=>setNoteDraft(e.target.value)}
+                      placeholder="¿Cómo te sentiste? ¿Tiempos? ¿Algún dolor? ¿Tu energía? ¿El clima?..."
+                      style={{width:"100%",height:90,background:"var(--bg)",border:"1.5px solid var(--border)",borderRadius:10,padding:"10px 12px",color:"var(--ink)",fontSize:12,resize:"none",outline:"none",lineHeight:1.5}}/>
+                    <div style={{display:"flex",gap:7,marginTop:8}}>
+                      <button onClick={()=>setNoteOpen(false)} className="btn-ghost" style={{flex:1}}>Cancelar</button>
+                      <button onClick={async()=>{
+                        const nn={...notes};
+                        if(noteDraft.trim())nn[selKey]={text:noteDraft.trim(),date:new Date().toISOString()};
+                        else delete nn[selKey];
+                        await saveNotes(nn);setNoteOpen(false);
+                      }} style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:"var(--violet)",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>Guardar nota</button>
+                    </div>
+                  </div>
+                ):(
+                  <button onClick={()=>{setNoteDraft(noteText);setNoteOpen(true);}}
+                    style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px dashed var(--border)",background:"transparent",color:"var(--ink3)",fontSize:12,cursor:"pointer"}}>
+                    {noteText?"✏️ Editar nota":"+ Añadir nota"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Week nav */}
+          {!selDay&&(
+            <div style={{display:"flex",gap:8,marginTop:4}}>
+              <button className="btn-ghost" disabled={week===1} onClick={()=>{setWeek(w=>Math.max(1,w-1));setSelDay(null);}} style={{flex:1,opacity:week===1?.4:1}}>← Anterior</button>
+              <button className="btn-ghost" disabled={week===20} onClick={()=>{setWeek(w=>Math.min(20,w+1));setSelDay(null);}} style={{flex:1,opacity:week===20?.4:1}}>Siguiente →</button>
+            </div>
+          )}
+        </>}
+
+        {/* ══ STRAVA ══ */}
+        {screen==="strava"&&(
+          <div className="fadeIn">
+            {!strava?.athlete?(
+              <div className="card" style={{padding:"32px 20px",textAlign:"center"}}>
+                <div style={{fontSize:48,marginBottom:12}}>🟠</div>
+                <p className="h2" style={{marginBottom:6}}>Conecta Strava</p>
+                <p className="body" style={{marginBottom:20}}>Sincroniza tus carreras automáticamente y marca los entrenamientos completados sin tocar nada.</p>
+                <button className="btn-primary" style={{background:"#FC4C02"}} onClick={()=>window.location.href=stravaUrl()}>⚡ Conectar Strava</button>
+                <button onClick={()=>setDatePicker(true)} className="btn-ghost" style={{width:"100%",marginTop:10}}>📅 Configurar fecha de inicio del plan</button>
+              </div>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                <div className="card" style={{padding:"14px",display:"flex",alignItems:"center",gap:12}}>
+                  <img src={strava.athlete.profile} alt="" style={{width:50,height:50,borderRadius:"50%",border:"3px solid #FC4C02"}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:15,color:"var(--ink)"}}>{strava.athlete.firstname} {strava.athlete.lastname}</div>
+                    <div className="caption" style={{marginTop:2}}>{strava.athlete.city} · ⚡ Conectado</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:20,fontWeight:800,color:"#FC4C02"}}>{(acts.reduce((s,a)=>s+a.distance,0)/1000).toFixed(0)}</div>
+                    <div className="caption">km totales</div>
+                  </div>
+                </div>
+                <div className="grid2">
+                  {[{l:"Carreras",v:acts.length,i:"🏃"},{l:"Km totales",v:`${(acts.reduce((s,a)=>s+a.distance,0)/1000).toFixed(0)}km`,i:"📏"},{l:"Ritmo medio",v:avgPace?fmtPace(avgPace)+"/km":"--",i:"⚡"},{l:"Adherencia",v:`${adherence}%`,i:"🎯"}].map(s=>(
+                    <div key={s.l} className="card" style={{padding:"12px",textAlign:"center"}}>
+                      <div style={{fontSize:22}}>{s.i}</div>
+                      <div style={{fontSize:17,fontWeight:800,color:"var(--orange)",marginTop:4}}>{s.v}</div>
+                      <div className="caption" style={{marginTop:2}}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="card" style={{padding:"12px 14px"}}>
+                  <div className="caption" style={{marginBottom:10}}>Actividades recientes</div>
+                  {acts.slice(0,8).map(a=>(
+                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}}>
+                      <span style={{fontSize:14}}>🏃</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12,fontWeight:500,color:"var(--ink)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{a.name}</div>
+                        <div className="caption" style={{marginTop:1,fontSize:9}}>{new Date(a.start_date_local).toLocaleDateString("es",{day:"numeric",month:"short"})}</div>
+                      </div>
+                      <div style={{textAlign:"right",flexShrink:0}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"#FC4C02"}}>{fmtDist(a.distance)}</div>
+                        <div className="caption" style={{fontSize:9}}>{fmtPace(a.average_speed)}/km</div>
+                      </div>
+                      {a.average_heartrate&&<div style={{fontSize:11,color:"var(--coral)",flexShrink:0,fontWeight:600}}>♥{Math.round(a.average_heartrate)}</div>}
+                    </div>
+                  ))}
+                  {acts.length===0&&<div style={{textAlign:"center",color:"var(--ink3)",padding:"20px",fontSize:13}}>Sincroniza para ver tus actividades</div>}
+                </div>
+                <button className="btn-primary" style={{background:"#FC4C02"}} onClick={()=>syncActs()} disabled={syncing}>{syncing?"Sincronizando...":"🔄 Sincronizar Strava"}</button>
+                <button onClick={()=>setDatePicker(true)} className="btn-ghost" style={{width:"100%"}}>📅 Fecha inicio: {planStart?new Date(planStart).toLocaleDateString("es",{day:"numeric",month:"long"}):"Sin configurar"}</button>
+                <button onClick={()=>{LS.set("pv3_str",null);setStrava(null);setActs([]);}} style={{padding:"9px",borderRadius:8,border:"1.5px solid var(--border)",background:"transparent",color:"var(--ink3)",fontSize:11,cursor:"pointer",width:"100%"}}>Desconectar Strava</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══ GUIDE ══ */}
+        {screen==="guide"&&(
+          <div className="fadeIn">
+            <div style={{display:"flex",gap:4,marginBottom:16,overflowX:"auto",paddingBottom:2}}>
+              {[["warmup","🔥 Calentamiento"],["cooldown","❄️ Vuelta calma"],["nutrition","🍽️ Nutrición"],["gels","💧 Geles"],["recovery","💆 Recovery"]].map(([s,l])=>(
+                <button key={s} onClick={()=>setGuideTab(s)}
+                  style={{padding:"7px 12px",borderRadius:20,border:`1.5px solid ${guideTab===s?"var(--orange)":"var(--border)"}`,background:guideTab===s?"var(--orange)":"transparent",color:guideTab===s?"#fff":"var(--ink3)",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            {guideTab==="warmup"&&<GuideList title="Calentamiento" subtitle="10 min · Dinámico · NUNCA estático antes de correr" items={[
+              {icon:"🚶",title:"Caminata activa",time:"3 min",desc:"Camina rápido aumentando la intensidad. Mueve los brazos con energía."},
+              {icon:"🦵",title:"Leg swings frontales",time:"15/lado",desc:"Apóyate en una pared. Balancea la pierna adelante y atrás. Aumenta el rango progresivamente."},
+              {icon:"↔️",title:"Leg swings laterales",time:"15/lado",desc:"Misma pared. Balancea de lado a lado. Activa abductores y rotadores externos."},
+              {icon:"⭕",title:"Hip circles",time:"10/lado",desc:"Pies a ancho de cadera. Círculos grandes con las caderas. Horario y antihorario."},
+              {icon:"🍑",title:"Glute bridges",time:"15 reps",desc:"Tumbada, pies en suelo. Eleva caderas apretando glúteos. 1 segundo arriba."},
+              {icon:"🏃",title:"High knees suaves",time:"30 seg",desc:"Rodillas al pecho alternando. Empieza lento, aumenta cadencia."},
+              {icon:"⚡",title:"Strides (solo Speed days)",time:"4×80m",desc:"Acelera hasta ritmo 5K en 80m. Recupera caminando de vuelta. Solo antes de sessions de velocidad."},
+            ]}/>}
+
+            {guideTab==="cooldown"&&<GuideList title="Vuelta a la calma" subtitle="15-20 min · Estático · La parte más importante" items={[
+              {icon:"🦵",title:"Psoas — flexor cadera",time:"45s/lado",desc:"Rodilla en suelo, pie delantero adelantado. Empuja caderas hacia adelante. ESENCIAL para runners.",tag:"🔴 Esencial"},
+              {icon:"🦵",title:"Isquiotibiales",time:"45s/pierna",desc:"Sentada, pierna estirada, inclínate con espalda recta. No fuerces la rodilla.",tag:"🔴 Esencial"},
+              {icon:"🦵",title:"Cuádriceps de pie",time:"45s/pierna",desc:"Talón al glúteo, rodillas juntas, cadera recta.",tag:"🔴 Esencial"},
+              {icon:"🍑",title:"Piriforme (glúteo profundo)",time:"45s/lado",desc:"Tumbada, tobillo sobre rodilla contraria, tira suave. Previene ciática.",tag:"🔴 Esencial"},
+              {icon:"🦶",title:"Pantorrilla — pared",time:"60s/pierna",desc:"Dedos en pared, talón en suelo. Luego dobla ligeramente la rodilla.",tag:"🔴 Esencial"},
+              {icon:"↔️",title:"IT Band lateral",time:"45s/lado",desc:"De pie, cruza la pierna detrás. Inclínate al lado contrario.",tag:"🟡 Importante"},
+              {icon:"🟤",title:"Foam roller",time:"2min/zona",desc:"Cuádriceps, IT band, isquios, pantorrillas, glúteos. Pausa 10s en puntos de tensión.",tag:"🟡 Importante"},
+              {icon:"🦵",title:"Elevación piernas — pared",time:"5 min",desc:"Tumbada, piernas en pared a 90°. Drenaje del lactato. Ideal post long run.",tag:"🟢 Bonus"},
+            ]}/>}
+
+            {guideTab==="nutrition"&&(
+              <div>
+                <p className="h2" style={{marginBottom:4}}>Nutrición para runners</p>
+                <p className="body" style={{marginBottom:16}}>Comes para rendir, no para compensar.</p>
+                {[
+                  {title:"Pre-entreno — 2-3h antes",color:"var(--green)",items:["Avena con plátano y miel","Tostada integral + aguacate + huevo","Porridge con frutos rojos","Arroz + verduras + pollo"]},
+                  {title:"Pre-entreno — 1h antes",color:"var(--amber)",items:["Plátano solo","Tostada con mermelada o miel","2-3 dátiles","Barrita de avena"]},
+                  {title:"Post-entreno — ventana 30-45min 🔑",color:"var(--orange)",items:["Batido proteína + leche + plátano","Yogur griego + granola + frutos rojos","Huevos + tostada integral","Pollo + arroz (post long runs)"]},
+                  {title:"Hidratación",color:"#0EA5E9",items:["500ml agua 2h antes de correr","150-200ml cada 20min durante el run","En verano: +500ml extra mínimo","Post: agua + pizca de sal si sudaste mucho"]},
+                  {title:"Analítica recomendada",color:"var(--violet)",items:["Hierro + ferritina (déficit frecuente en mujeres runners)","Vitamina D en invierno","Si la ferritina está baja: el rendimiento cae aunque no estés anémica","Pídela a tu médico antes de empezar el plan"]},
+                ].map(s=>(
+                  <div key={s.title} className="card" style={{padding:"12px 14px",marginBottom:10,borderLeft:`3px solid ${s.color}`}}>
+                    <div style={{fontSize:10,fontWeight:700,color:s.color,textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>{s.title}</div>
+                    {s.items.map((x,i)=><BulletLine key={i} color={s.color}>{x}</BulletLine>)}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {guideTab==="gels"&&(
+              <div>
+                <p className="h2" style={{marginBottom:4}}>Guía de Geles</p>
+                <p className="body" style={{marginBottom:16}}>El combustible extra para runs de más de 75 minutos.</p>
+                {[
+                  {title:"¿Cuándo necesitas gel?",color:"var(--green)",items:["Runs de MÁS de 75 minutos","Tu cuerpo tiene glucógeno para ~60-75min","Sin gel en runs largos: el 'muro' aparece","En la carrera (21km a 5:41/km) tardarás ~2h → geles obligatorios"]},
+                  {title:"Semanas 1-7 — sin geles",color:"var(--amber)",items:["Long runs menores de 75min","Deja que el cuerpo use sus reservas","Beneficio: entrenas eficiencia metabólica"]},
+                  {title:"Semana 8+ — introducir gel",color:"var(--orange)",items:["Primer gel en km 8 del long run","SIEMPRE con agua — sin agua puede molestar","Practica en entrenamiento, nunca estrenes en carrera","Empieza con uno, luego dos, luego tres"]},
+                  {title:"Plan de gel para carrera",color:"var(--coral)",items:["Gel 1: km 7 — antes de sentir que lo necesitas","Gel 2: km 14 — cuando más lo necesitarás","Agua en cada avituallamiento","Nunca cambies de marca el día de carrera"]},
+                  {title:"¿Qué marca?",color:"var(--violet)",items:["Maurten 100 — muy suave, sin sabor artificial (más caro)","SIS Go Gel — buena relación calidad/precio","Evita geles con cafeína las primeras veces","Prueba 2-3 marcas en training y quédate con la mejor"]},
+                ].map(s=>(
+                  <div key={s.title} className="card" style={{padding:"12px 14px",marginBottom:10,borderLeft:`3px solid ${s.color}`}}>
+                    <div style={{fontSize:10,fontWeight:700,color:s.color,textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>{s.title}</div>
+                    {s.items.map((x,i)=><BulletLine key={i} color={s.color}>{x}</BulletLine>)}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {guideTab==="recovery"&&(
+              <div>
+                <p className="h2" style={{marginBottom:4}}>Recovery</p>
+                <p className="body" style={{marginBottom:16}}>El entrenamiento más infravalorado.</p>
+                {[
+                  {title:"Sueño — lo más importante",color:"var(--violet)",items:["7-8h mínimo en días normales","8-9h en semanas de pico si puedes","Durante el sueño se libera hormona de crecimiento — aquí mejoras","Sin sueño: mismo pace se siente más duro y más riesgo de lesión"]},
+                  {title:"Masajes de descarga",color:"var(--green)",items:["Fases 1-2: 1 masaje cada 3-4 semanas","Fase 3 (pico): cada 2 semanas","Semana antes de carrera: masaje SUAVE (no profundo)","Pide: masaje deportivo de descarga + drenaje linfático"]},
+                  {title:"Chaleco con peso",color:"var(--amber)",items:["Semanas 1-8: NO — el cuerpo se adapta al volumen","Semana 9+: empieza con 1-2kg en rodajes fáciles","NUNCA en speedwork ni long runs","Si tu pace baja +30s/km: demasiado peso"]},
+                  {title:"Señales de sobreentrenamiento",color:"var(--coral)",items:["Sueño perturbado sin razón aparente","Fatiga que no desaparece con descanso","Rendimiento que baja aunque entrenes más","Si tienes 3 de estos: semana de descarga obligatoria"]},
+                ].map(s=>(
+                  <div key={s.title} className="card" style={{padding:"12px 14px",marginBottom:10,borderLeft:`3px solid ${s.color}`}}>
+                    <div style={{fontSize:10,fontWeight:700,color:s.color,textTransform:"uppercase",letterSpacing:.4,marginBottom:8}}>{s.title}</div>
+                    {s.items.map((x,i)=><BulletLine key={i} color={s.color}>{x}</BulletLine>)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* BOTTOM NAV */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:"1.5px solid var(--border)",padding:"6px 0 10px",zIndex:50}}>
+        <div style={{maxWidth:500,margin:"0 auto",display:"flex"}}>
+          {[["plan","📅","Plan"],["strava","⚡","Strava"],["guide","📚","Guías"]].map(([s,ic,lb])=>(
+            <button key={s} className="nav-tab" onClick={()=>{setScreen(s);setSelDay(null);}}>
+              <span style={{fontSize:20}}>{ic}</span>
+              <span style={{fontSize:10,color:screen===s?"var(--orange)":"var(--ink3)",fontWeight:screen===s?700:400}}>{lb}</span>
+              {screen===s&&<div style={{width:20,height:2.5,background:"var(--orange)",borderRadius:2}}/>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── COMPONENTS ─────────────────────────────────────────────────────────────────
+function Box({color,light,icon,title,tag,children}){
+  return(
+    <div className="card" style={{padding:"12px",overflow:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+        <span style={{fontSize:16}}>{icon}</span>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:10,fontWeight:700,color,textTransform:"uppercase",letterSpacing:.4}}>{tag}</div>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--ink)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+        </div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:4}}>{children}</div>
+    </div>
+  );
+}
+function BulletLine({color,children}){
+  return(
+    <div style={{display:"flex",alignItems:"flex-start",gap:6}}>
+      <div style={{width:4,height:4,borderRadius:"50%",background:color,marginTop:4.5,flexShrink:0}}/>
+      <span style={{fontSize:11,color:"var(--ink2)",lineHeight:1.5}}>{children}</span>
+    </div>
+  );
+}
+function ModalSheet({children,onClose}){
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,backdropFilter:"blur(4px)"}} onClick={onClose}>
+      <div style={{width:"100%",maxWidth:500,background:"#fff",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{width:36,height:4,background:"var(--border)",borderRadius:2,margin:"0 auto 18px"}}/>
+        {children}
+      </div>
+    </div>
+  );
+}
+function GuideList({title,subtitle,items}){
+  return(
+    <div>
+      <p className="h2" style={{marginBottom:4}}>{title}</p>
+      <p className="body" style={{marginBottom:16}}>{subtitle}</p>
+      {items.map(it=>(
+        <div key={it.title} className="card" style={{padding:"12px 14px",marginBottom:8,display:"flex",gap:12,alignItems:"flex-start"}}>
+          <div style={{fontSize:20,flexShrink:0}}>{it.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
+              <div style={{fontSize:13,fontWeight:600,color:"var(--ink)"}}>{it.title}</div>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}}>
+                <span style={{fontSize:9,fontWeight:600,color:"var(--ink3)",background:"var(--bg)",padding:"2px 7px",borderRadius:4}}>{it.time}</span>
+                {it.tag&&<span style={{fontSize:9}}>{it.tag}</span>}
+              </div>
+            </div>
+            <div className="body" style={{marginTop:4,fontSize:12}}>{it.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
